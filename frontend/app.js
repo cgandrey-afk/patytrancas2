@@ -1,125 +1,74 @@
-const API_URL = "https://patytrancas2.onrender.com";
+import streamlit as st
+from datetime import datetime
+import agendamento
+import admin
+import utils
 
-// Troca de Abas
-function trocarAba(abaId, elementoBtn) {
-  document.querySelectorAll('.aba-panel').forEach(panel => panel.classList.remove('active'));
-  document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
+# Configuração da página e carregamento do CSS
+st.set_page_config(page_title="Paty Tranças", page_icon="👑", layout="wide")
+utils.carregar_css()
 
-  document.getElementById(abaId).classList.add('active');
-  elementoBtn.classList.add('active');
+# 1. TROCA DE ABAS / NAVEGAÇÃO (Substitui 'trocarAba')
+with st.sidebar:
+    st.markdown("## 👑 Paty Tranças")
+    aba_selecionada = st.radio(
+        "Menu",
+        ["🗓️ Agendar", "📸 Analisar com IA", "📋 Meus Agendamentos", "🔒 Admin"],
+        label_visibility="collapsed"
+    )
 
-  if (abaId === 'aba-meus-agendamentos') {
-    carregarAgendamentos();
-  }
-}
+# 2. ABA: AGENDAMENTO (Substitui 'agendar')
+if aba_selecionada == "🗓️ Agendar":
+    agendamento.render(db=st.session_state.get("db"), salvar_agendamento_fn=st.session_state.get("salvar_fn"))
 
-// Preview da foto selecionada
-function previewFoto(event) {
-  const file = event.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      document.getElementById('imgPreview').src = e.target.result;
-      document.getElementById('previewContainer').style.display = 'block';
-    }
-    reader.readAsDataURL(file);
-  }
-}
+# 3. ABA: ANALISAR COM IA (Substitui 'analisarFoto' e 'previewFoto')
+elif aba_selecionada == "📸 Analisar com IA":
+    with st.container(border=True):
+        st.subheader("✨ Análise Inteligente de Penteado")
+        st.caption("Envie uma foto do estilo desejado para a IA calcular a complexidade.")
+        
+        # O Streamlit já faz o 'previewFoto' automaticamente no servidor/UI
+        foto = st.file_uploader("Selecione a foto do modelo:", type=["jpg", "jpeg", "png"])
+        
+        if foto is not None:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.image(foto, caption="Preview do Modelo", use_container_width=True)
+            
+            with col2:
+                if st.button("🔍 Analisar com Gemini IA", type="primary", use_container_width=True):
+                    with st.spinner("Analisando a imagem... Aguarde alguns segundos."):
+                        dados = utils.analisar_imagem_com_gemini(foto)
+                    
+                    if dados:
+                        st.success("✨ Análise Concluída")
+                        st.write(f"**Estilo Identificado:** {dados.get('estilo_identificado', 'Não especificado')}")
+                        st.write(f"**Dificuldade:** {dados.get('dificuldade', 'Média')}")
+                        
+                        tempo = utils.formatar_tempo(dados.get('tempo_estimado_minutos', 0))
+                        st.write(f"**Tempo Estimado:** {tempo}")
+                        st.info(f"**Observação:** {dados.get('observacao', 'Nenhuma observação.')}")
 
-// Função de Análise por IA
-async function analisarFoto() {
-  const fileInput = document.getElementById('fotoInput');
-  const divResultado = document.getElementById('resultadoIA');
+# 4. ABA: LISTA DE AGENDAMENTOS (Substitui 'carregarAgendamentos')
+elif aba_selecionada == "📋 Meus Agendamentos":
+    st.subheader("📋 Agendamentos Cadastrados")
+    
+    # Busca do banco em Python (não precisa de fetch para API externa)
+    df_agendamentos = st.session_state.get("carregar_agendamentos_fn")()
+    
+    if not df_agendamentos.empty:
+        for _, row in df_agendamentos.iterrows():
+            with st.container(border=True):
+                col_info, col_data = st.columns([2, 1])
+                with col_info:
+                    st.markdown(f"**{row['cliente_nome']}** ({row['servico']})")
+                    st.caption(f"📱 {row['cliente_telefone']}")
+                with col_data:
+                    st.markdown(f"📅 {row['data_agendamento']}")
+                    st.markdown(f"⏰ {row['horario']}")
+    else:
+        st.info("Nenhum agendamento encontrado no momento.")
 
-  if (!fileInput.files[0]) {
-    alert("Selecione uma foto do modelo primeiro!");
-    return;
-  }
-
-  divResultado.style.display = 'block';
-  divResultado.innerHTML = "⏳ <em>Analisando imagem com o Gemini IA... Aguarde alguns segundos.</em>";
-
-  const formData = new FormData();
-  formData.append("foto", fileInput.files[0]);
-
-  try {
-    const res = await fetch(`${API_URL}/api/analisar-ia`, { method: "POST", body: formData });
-    const data = await res.json();
-
-    if (res.ok) {
-      divResultado.innerHTML = `
-        <h3 style="color:#a855f7; margin-bottom:10px;">✨ Análise Concluída</h3>
-        <p><strong>Estilo Identificado:</strong> ${data.estilo_identificado || 'Não especificado'}</p>
-        <p><strong>Dificuldade:</strong> ${data.dificuldade || 'Média'}</p>
-        <p><strong>Tempo Estimado:</strong> ${data.tempo_estimado_minutos || '--'} minutos</p>
-        <p style="margin-top:8px;"><strong>Observação:</strong> ${data.observacao || 'Nenhuma observação.'}</p>
-      `;
-    } else {
-      divResultado.innerHTML = "<p style='color:#ef4444;'>❌ Ocorreu um erro ao processar a imagem no servidor.</p>";
-    }
-  } catch (err) {
-    divResultado.innerHTML = "<p style='color:#ef4444;'>❌ Erro ao conectar com o serviço de IA.</p>";
-  }
-}
-
-// Envio do formulário de agendamento
-async function agendar(e) {
-  e.preventDefault();
-  const statusDiv = document.getElementById('mensagemStatus');
-  statusDiv.innerHTML = "Salvando agendamento...";
-
-  const payload = {
-    cliente_nome: document.getElementById('nome').value,
-    cliente_telefone: document.getElementById('telefone').value,
-    servico: document.getElementById('servico').value,
-    data_agendamento: document.getElementById('data').value,
-    horario: document.getElementById('horario').value
-  };
-
-  try {
-    const res = await fetch(`${API_URL}/api/agendamentos`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    if (res.ok) {
-      statusDiv.innerHTML = "<p style='color:#22c55e;'>✅ Agendamento realizado com sucesso!</p>";
-      document.getElementById('formAgendamento').reset();
-    } else {
-      statusDiv.innerHTML = "<p style='color:#ef4444;'>❌ Não foi possível realizar o agendamento.</p>";
-    }
-  } catch (err) {
-    statusDiv.innerHTML = "<p style='color:#ef4444;'>❌ Erro de conexão com o servidor.</p>";
-  }
-}
-
-// Buscar agendamentos na API
-async function carregarAgendamentos() {
-  const container = document.getElementById('listaAgendamentos');
-  container.innerHTML = "Buscando agendamentos...";
-
-  try {
-    const res = await fetch(`${API_URL}/api/agendamentos`);
-    const agendamentos = await res.json();
-
-    if (res.ok && Array.isArray(agendamentos) && agendamentos.length > 0) {
-      container.innerHTML = agendamentos.map(item => `
-        <div class="agendamento-card">
-          <div>
-            <strong>${item.cliente_nome}</strong> (${item.servico})<br>
-            <small style="color:var(--text-muted)">📱 ${item.cliente_telefone}</small>
-          </div>
-          <div style="text-align:right;">
-            📅 ${item.data_agendamento}<br>
-            ⏰ ${item.horario}
-          </div>
-        </div>
-      `).join('');
-    } else {
-      container.innerHTML = "<p style='color:var(--text-muted);'>Nenhum agendamento encontrado no momento.</p>";
-    }
-  } catch (err) {
-    container.innerHTML = "<p style='color:#ef4444;'>Erro ao carregar os agendamentos.</p>";
-  }
-}
+# 5. ABA: ÁREA ADMINISTRATIVA
+elif aba_selecionada == "🔒 Admin":
+    admin.render(db=st.session_state.get("db"), ...)

@@ -1,3 +1,6 @@
+/* =============================================================
+   1. VARIÁVEIS E PALETA DE CORES (DARK MODE)
+   ============================================================= */
 :root {
   --primary: #4a154b;
   --primary-hover: #611f64;
@@ -10,158 +13,110 @@
   --accent: #238636;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-
-body {
-  background-color: var(--bg-main);
-  color: var(--text-main);
-  min-height: 100vh;
+/* =============================================================
+   2. ESTRUTURA GLOBAL E FUNDO DA APLICAÇÃO
+   ============================================================= */
+.stApp {
+  background-color: var(--bg-main) !important;
+  color: var(--text-main) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
 }
 
-.app-layout {
-  display: flex;
-  min-height: 100vh;
+/* Oculta apenas rodapé, enfeites e menus do Streamlit */
+#MainMenu, footer, [data-testid="stDecoration"], [data-testid="stHeader"] {
+  display: none !important;
 }
 
-/* Sidebar */
-.sidebar {
-  width: 260px;
-  background-color: var(--bg-sidebar);
-  border-right: 1px solid var(--border);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
+/* Container do Conteúdo Principal */
+.stMainBlockContainer, div[data-testid="stAppViewBlockContainer"] {
+  padding-top: 2rem !important;
+  padding-bottom: 2rem !important;
+  max-width: 900px !important;
 }
 
-.brand {
-  margin-bottom: 30px;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 15px;
+/* =============================================================
+   3. SIDEBAR (MENU LATERAL)
+   ============================================================= */
+section[data-testid="stSidebar"] {
+  background-color: var(--bg-sidebar) !important;
+  border-right: 1px solid var(--border) !important;
 }
 
-.brand h2 { color: #fff; font-size: 1.4rem; }
-.brand p { color: var(--text-muted); font-size: 0.85rem; }
-
-.menu { display: flex; flex-direction: column; gap: 8px; }
-
-.menu-btn {
-  background: transparent;
-  color: var(--text-main);
-  border: none;
-  padding: 12px 15px;
-  text-align: left;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: 0.2s;
+section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
+  gap: 8px !important;
 }
 
-.menu-btn:hover { background-color: rgba(255, 255, 255, 0.05); }
-.menu-btn.active { background-color: var(--primary); font-weight: bold; }
-
-/* Content Area */
-.content {
-  flex: 1;
-  padding: 40px;
-  max-width: 900px;
+/* =============================================================
+   4. TIPOGRAFIA & TEXTOS
+   ============================================================= */
+h1, h2, h3, h4, h5, h6, label, p, span, div {
+  color: var(--text-main) !important;
 }
 
-.aba-panel { display: none; }
-.aba-panel.active { display: block; }
-
-h1 { font-size: 1.8rem; margin-bottom: 5px; }
-.subtitle { color: var(--text-muted); margin-bottom: 25px; }
-
-/* Cards & Forms */
-.card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 25px;
-  margin-bottom: 20px;
+.subtitle, [data-testid="stCaptionContainer"] p {
+  color: var(--text-muted) !important;
 }
 
-.form-group {
-  margin-bottom: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+/* =============================================================
+   5. CARDS & CONTAINERS COM BORDAS (st.container(border=True))
+   ============================================================= */
+div[data-testid="stVerticalBlockBorderWrapper"] > div {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  padding: 20px !important;
+  box-shadow: none !important;
 }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
+/* =============================================================
+   6. INPUTS, SELECTS E FORMULÁRIOS
+   ============================================================= */
+div[data-testid="stTextInput"] input,
+div[data-testid="stNumberInput"] input,
+div[data-testid="stDateInput"] input,
+div[data-baseweb="select"] > div {
+  background-color: #0d1117 !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text-main) !important;
+  border-radius: 6px !important;
 }
 
-label { font-size: 0.9rem; color: var(--text-main); }
-
-input, select {
-  background-color: #0d1117;
-  border: 1px solid var(--border);
-  color: var(--text-main);
-  padding: 12px;
-  border-radius: 6px;
-  font-size: 0.95rem;
+div[data-testid="stTextInput"] input:focus,
+div[data-baseweb="select"] > div:focus-within {
+  border-color: #58a6ff !important;
 }
 
-input:focus, select:focus {
-  outline: none;
-  border-color: #58a6ff;
+/* =============================================================
+   7. BOTÕES (Menu, Ações e Submit)
+   ============================================================= */
+div.stButton > button, 
+div.stFormSubmitButton > button {
+  background-color: var(--primary) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  font-weight: bold !important;
+  padding: 10px 15px !important;
+  transition: background-color 0.2s ease !important;
 }
 
-.btn-primary {
-  width: 100%;
-  background-color: var(--primary);
-  color: white;
-  border: none;
-  padding: 12px;
-  border-radius: 6px;
-  font-weight: bold;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: 0.2s;
+div.stButton > button:hover,
+div.stFormSubmitButton > button:hover {
+  background-color: var(--primary-hover) !important;
+  color: #ffffff !important;
 }
 
-.btn-primary:hover { background-color: var(--primary-hover); }
-
-.btn-secondary {
-  background-color: var(--border);
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 6px;
-  cursor: pointer;
+/* Botões Secundários */
+div.stButton > button[kind="secondary"] {
+  background-color: var(--border) !important;
+  color: var(--text-main) !important;
 }
 
-/* Image Preview & Results */
-.preview-box { margin-bottom: 15px; text-align: center; }
-.preview-box img { max-width: 100%; max-height: 250px; border-radius: 8px; border: 1px solid var(--border); }
-
-.resultado-ia {
-  border-left: 4px solid var(--primary);
-  line-height: 1.6;
-}
-
-/* Grid de Agendamentos */
-.header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.agendamentos-grid { display: flex; flex-direction: column; gap: 12px; }
-.agendamento-card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border);
-  padding: 15px;
-  border-radius: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.status-msg { margin-top: 15px; font-weight: bold; }
-
-/* Responsivo para celular */
+/* =============================================================
+   8. AJUSTES RESPONSIVOS (MOBILE)
+   ============================================================= */
 @media (max-width: 768px) {
-  .app-layout { flex-direction: column; }
-  .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
-  .content { padding: 20px; }
-  .form-row { grid-template-columns: 1fr; }
+  .stMainBlockContainer {
+    padding: 15px !important;
+  }
 }
