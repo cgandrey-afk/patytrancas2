@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paty Tranças - Agendamento</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Paty Tranças</h1>
+    <p>Agende seu horário ou faça uma análise por foto!</p>
+  </header>
+
+  <main class="container">
+    <!-- Seção de Análise IA -->
+    <section class="card">
+      <h2>Analisar Penteado por Foto (IA)</h2>
+      <input type="file" id="fotoInput" accept="image/*">
+      <button onclick="analisarFoto()">Analisar Foto</button>
+      <div id="resultadoIA" class="resultado"></div>
+    </section>
+
+    <!-- Seção de Agendamento -->
+    <section class="card">
+      <h2>Novo Agendamento</h2>
+      <form id="formAgendamento" onsubmit="agendar(event)">
+        <input type="text" id="nome" placeholder="Seu Nome" required>
+        <input type="tel" id="telefone" placeholder="Seu WhatsApp" required>
+        <input type="text" id="servico" placeholder="Serviço (ex: Nagô Tradicional)" required>
+        <input type="date" id="data" required>
+        <input type="time" id="horario" required>
+        <button type="submit">Confirmar Agendamento</button>
+      </form>
+      <div id="mensagemStatus"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
