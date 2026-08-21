@@ -3,38 +3,103 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Paty Tranças - Agendamento</title>
+  <title>Paty Tranças - Agendamento & Análise IA</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Paty Tranças</h1>
-    <p>Agende seu horário ou faça uma análise por foto!</p>
-  </header>
+  <div class="app-layout">
+    <!-- Sidebar / Menu Lateral -->
+    <aside class="sidebar">
+      <div class="brand">
+        <h2>👑 Paty Tranças</h2>
+        <p>Atendimento & Estilo</p>
+      </div>
+      <nav class="menu">
+        <button class="menu-btn active" onclick="trocarAba('aba-agendamento', this)">📅 Novo Agendamento</button>
+        <button class="menu-btn" onclick="trocarAba('aba-ia', this)">✨ Análise de Foto (IA)</button>
+        <button class="menu-btn" onclick="trocarAba('aba-meus-agendamentos', this)">📋 Meus Agendamentos</button>
+      </nav>
+    </aside>
 
-  <main class="container">
-    <!-- Seção de Análise IA -->
-    <section class="card">
-      <h2>Analisar Penteado por Foto (IA)</h2>
-      <input type="file" id="fotoInput" accept="image/*">
-      <button onclick="analisarFoto()">Analisar Foto</button>
-      <div id="resultadoIA" class="resultado"></div>
-    </section>
+    <!-- Conteúdo Principal -->
+    <main class="content">
+      <!-- ABA 1: AGENDAMENTO -->
+      <section id="aba-agendamento" class="aba-panel active">
+        <h1>Agendar Horário</h1>
+        <p class="subtitle">Preencha os dados abaixo para reservar seu atendimento.</p>
+        
+        <form id="formAgendamento" class="card" onsubmit="agendar(event)">
+          <div class="form-group">
+            <label for="nome">Nome Completo</label>
+            <input type="text" id="nome" placeholder="Ex: Maria Silva" required>
+          </div>
 
-    <!-- Seção de Agendamento -->
-    <section class="card">
-      <h2>Novo Agendamento</h2>
-      <form id="formAgendamento" onsubmit="agendar(event)">
-        <input type="text" id="nome" placeholder="Seu Nome" required>
-        <input type="tel" id="telefone" placeholder="Seu WhatsApp" required>
-        <input type="text" id="servico" placeholder="Serviço (ex: Nagô Tradicional)" required>
-        <input type="date" id="data" required>
-        <input type="time" id="horario" required>
-        <button type="submit">Confirmar Agendamento</button>
-      </form>
-      <div id="mensagemStatus"></div>
-    </section>
-  </main>
+          <div class="form-group">
+            <label for="telefone">WhatsApp / Telefone</label>
+            <input type="tel" id="telefone" placeholder="Ex: (19) 99999-9999" required>
+          </div>
+
+          <div class="form-group">
+            <label for="servico">Modelo / Serviço</label>
+            <select id="servico" required>
+              <option value="">Selecione o serviço...</option>
+              <option value="Nagô Tradicional">Nagô Tradicional</option>
+              <option value="Box Braids">Box Braids</option>
+              <option value="Goddess Braids">Goddess Braids</option>
+              <option value="Twist / Fulani">Twist / Fulani</option>
+              <option value="Outro Modelo">Outro Modelo</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="data">Data</label>
+              <input type="date" id="data" required>
+            </div>
+            <div class="form-group">
+              <label for="horario">Horário</label>
+              <input type="time" id="horario" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">Confirmar Agendamento</button>
+        </form>
+        <div id="mensagemStatus" class="status-msg"></div>
+      </section>
+
+      <!-- ABA 2: ANÁLISE POR IA -->
+      <section id="aba-ia" class="aba-panel">
+        <h1>Análise de Penteado por Foto</h1>
+        <p class="subtitle">Envie uma foto do modelo de trança para a IA estimar tempo e complexidade.</p>
+
+        <div class="card">
+          <div class="form-group">
+            <label for="fotoInput">Selecione uma imagem do seu computador/celular</label>
+            <input type="file" id="fotoInput" accept="image/*" onchange="previewFoto(event)">
+          </div>
+
+          <div id="previewContainer" class="preview-box" style="display: none;">
+            <img id="imgPreview" src="" alt="Pré-visualização">
+          </div>
+
+          <button onclick="analisarFoto()" class="btn-primary">Analisar com IA</button>
+        </div>
+
+        <div id="resultadoIA" class="card resultado-ia" style="display: none;"></div>
+      </section>
+
+      <!-- ABA 3: CONSULTAR AGENDAMENTOS -->
+      <section id="aba-meus-agendamentos" class="aba-panel">
+        <div class="header-flex">
+          <h1>Agendamentos Salvos</h1>
+          <button onclick="carregarAgendamentos()" class="btn-secondary">🔄 Atualizar</button>
+        </div>
+        <div id="listaAgendamentos" class="agendamentos-grid">
+          <p>Carregando agendamentos...</p>
+        </div>
+      </section>
+    </main>
+  </div>
 
   <script src="app.js"></script>
 </body>
