@@ -165,17 +165,22 @@
     </div>
   </footer>
 
-	<!-- Container de Redes Sociais Flutuantes -->
+	<!-- Container dos Botões Flutuantes (WhatsApp, Instagram e Localização) -->
 	<div class="social-float-container">
-	  <!-- Botão Instagram -->
-	  <a id="btnInstagramFlutuante" href="#" target="_blank" class="social-float instagram-float" aria-label="Siga no Instagram">
-		<i class="fa-brands fa-instagram"></i>
+	  <!-- Botão WhatsApp -->
+	  <a id="btnWhatsappFlutuante" href="#" target="_blank" rel="noopener noreferrer" class="social-float whatsapp-float" title="Fale pelo WhatsApp">
+		<i class="fab fa-whatsapp"></i>
 	  </a>
 
-	  <!-- Botão WhatsApp -->
-	  <a id="btnWhatsappFlutuante" href="#" target="_blank" class="social-float whatsapp-float" aria-label="Contato via WhatsApp">
-		<i class="fa-brands fa-whatsapp"></i>
+	  <!-- Botão Instagram -->
+	  <a id="btnInstagramFlutuante" href="#" target="_blank" rel="noopener noreferrer" class="social-float instagram-float" title="Siga no Instagram">
+		<i class="fab fa-instagram"></i>
 	  </a>
+
+	  <!-- Botão Localização / Como Chegar -->
+	  <button onclick="abrirModalLocalizacao()" class="social-float location-float" title="Como Chegar">
+		📍
+	  </button>
 	</div>
 
   <script src="script.js"></script>

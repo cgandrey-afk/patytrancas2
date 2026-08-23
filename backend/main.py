@@ -85,17 +85,15 @@ def obter_logo():
     raise HTTPException(status_code=404, detail="Logo não encontrada.")   
 
 
-@app.get('/api/contato', async (req, res) => {
-  try {
-    const doc = await db.collection('configuracoes').doc('contato').get();
-    if (!doc.exists) {
-      return res.status(404).json({ erro: 'Configurações de contato não encontradas' });
-    }
-    res.json(doc.data());
-  } catch (error) {
-    res.status(500).json({ erro: 'Erro ao buscar dados de contato' });
-  }
-});    
+@app.get("/api/contato")
+def obter_contato():
+    try:
+        doc = fb.db.collection("configuracoes").document("contato").get()
+        if not doc.exists:
+            raise HTTPException(status_code=404, detail="Configurações de contato não encontradas.")
+        return doc.to_dict()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Erro ao buscar dados de contato.") 
 
 @app.put("/api/agendamentos/status")
 def atualizar_status(req: StatusUpdateRequest):

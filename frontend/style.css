@@ -486,6 +486,18 @@ footer {
   opacity: 1;
 }
 
+/* Estilo específico para o botão flutuante de Localização */
+.location-float {
+  background-color: #4285F4; /* Azul estilo Google Maps */
+  font-size: 24px;          /* Tamanho do emoji/ícone */
+  border: none;
+  cursor: pointer;
+}
+
+.location-float:hover {
+  transform: scale(1.1);
+}
+
 /* Responsividade Mobile */
 @media (max-width: 768px) {
   .hero {

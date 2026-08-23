@@ -335,6 +335,48 @@ function enviarAgendamentoWhatsApp(dados) {
   window.open(`https://wa.me/${telefoneWhatsAppGlobal}?text=${mensagem}`, '_blank');
 }
 
+// Variável global para armazenar o endereço vindo da API
+let enderecoGlobal = 'Campinas, SP'; // Fallback padrão caso o banco demore
+
+// Na sua função carregarContato(), adicione a leitura do endereço:
+// (Certifique-se de que a API /api/contato retorna o campo "endereco")
+if (data.endereco) {
+  enderecoGlobal = data.endereco;
+  
+  const txtEndereco = document.getElementById('textoEnderecoExibicao');
+  if (txtEndereco) {
+    txtEndereco.innerText = enderecoGlobal;
+  }
+}
+
+// Configuração dos links de rotas no finally da função carregarContato:
+if (enderecoGlobal) {
+  const enderecoEncoded = encodeURIComponent(enderecoGlobal);
+  
+  const linkMaps = document.getElementById('linkGoogleMaps');
+  if (linkMaps) linkMaps.href = `https://www.google.com/maps/search/?api=1&query=${enderecoEncoded}`;
+
+  const linkUber = document.getElementById('linkUber');
+  if (linkUber) linkUber.href = `https://m.uber.com/ul/?action=setPickup&dropoff[formatted_address]=${enderecoEncoded}`;
+}
+
+// Funções do Modal de Localização
+function abrirModalLocalizacao() {
+  const modal = document.getElementById('modalLocalizacao');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+function fecharModalLocalizacao(e, forcar = false) {
+  const modal = document.getElementById('modalLocalizacao');
+  if (!modal) return;
+  
+  if (forcar || (e && e.target.id === 'modalLocalizacao')) {
+    modal.style.display = 'none';
+  }
+}
+
 // INICIALIZAÇÃO ÚNICA AO CARREGAR O DOCUMENTO
 document.addEventListener("DOMContentLoaded", () => {
   resetarTemporizadorInatividade();
@@ -342,5 +384,5 @@ document.addEventListener("DOMContentLoaded", () => {
   carregarBanners();
   carregarServicos();
   carregarAgendamentos();
-  carregarContato();
+  carregarContato(); 
 });

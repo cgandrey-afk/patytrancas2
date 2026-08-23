@@ -52,6 +52,16 @@ def buscar_logo():
     except Exception as e:
         print(f"Erro ao buscar logo: {e}")
         return None
+        
+def buscar_contato():
+    try:
+        doc = db.collection("configuracoes").document("contato").get()
+        if doc.exists:
+            return doc.to_dict()
+        return None
+    except Exception as e:
+        print(f"Erro ao buscar contato: {e}")
+        return None
     
 def carregar_servicos():
     try:
