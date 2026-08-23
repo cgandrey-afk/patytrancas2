@@ -246,23 +246,43 @@ async function carregarAgendamentos() {
   container.innerHTML = "Buscando agendamentos...";
 
   try {
-    // Busca os agendamentos passando o ID específico deste usuário na URL
     const res = await fetch(`${API_URL}/api/agendamentos/${MEU_USER_ID}`);
     const agendamentos = await res.json();
 
     if (res.ok && Array.isArray(agendamentos) && agendamentos.length > 0) {
-      container.innerHTML = agendamentos.map(item => `
-        <div class="agendamento-card">
-          <div>
-            <strong>${item.cliente_nome}</strong> (${item.servico})<br>
-            <small style="color:var(--text-muted)">📱 ${item.cliente_telefone}</small>
+      container.innerHTML = agendamentos.map(item => {
+        let corStatus = "#eab308"; // Amarelo para Pendente
+        if (item.status === "Aprovado") corStatus = "#22c55e"; // Verde
+        if (item.status === "Cancelado") corStatus = "#ef4444"; // Vermelho
+
+        return `
+          <div class="agendamento-card" style="border-left: 4px solid ${corStatus}; padding: 12px; margin-bottom: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <strong>${item.cliente_nome}</strong> (${item.servico})<br>
+                <small style="color:var(--text-muted)">📱 ${item.cliente_telefone}</small><br>
+                <small>Status: <strong style="color: ${corStatus}">${item.status || 'Pendente'}</strong></small>
+                ${item.pedido_cancelamento ? '<br><small style="color:#ef4444">⚠️ Cancelamento solicitado (Pendente)</small>' : ''}
+                ${item.pedido_reagendamento ? '<br><small style="color:#3b82f6">⚠️ Reagendamento solicitado para ' + item.novo_data + ' às ' + item.novo_horario + ' (Status: ' + (item.status_reag || 'Pendente') + ')</small>' : ''}
+              </div>
+              <div style="text-align:right;">
+                📅 ${item.data_agendamento}<br>
+                ⏰ ${item.horario}
+              </div>
+            </div>
+
+            <!-- Botões de Ação Fixos em Cada Card -->
+            <div style="margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end;">
+              <button onclick='prepararReagendamento("${item.id}", "${item.status}", "${item.cliente_nome}", "${item.cliente_telefone}", "${item.servico}")' style="padding: 6px 12px; background: #3b82f6; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;">
+                🔄 Reagendar
+              </button>
+              <button onclick='executarCancelamento("${item.id}", "${item.status}")' style="padding: 6px 12px; background: #ef4444; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;">
+                ❌ Cancelar
+              </button>
+            </div>
           </div>
-          <div style="text-align:right;">
-            📅 ${item.data_agendamento}<br>
-            ⏰ ${item.horario}
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     } else {
       container.innerHTML = "<p style='color:var(--text-muted);'>Nenhum agendamento encontrado para este aparelho.</p>";
     }
@@ -297,6 +317,85 @@ function resetarTemporizadorInatividade() {
 ['mousemove', 'mousedown', 'touchstart', 'scroll', 'keydown'].forEach(evento => {
   window.addEventListener(evento, resetarTemporizadorInatividade, { passive: true });
 });
+
+// Função do Botão Cancelar
+async function executarCancelamento(docId, statusAtual) {
+  if (!confirm("Deseja realmente cancelar este agendamento?")) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/agendamentos/cancelar/${MEU_USER_ID}/${docId}?status=${statusAtual}`, {
+      method: "DELETE"
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      alert(data.mensagem);
+      carregarAgendamentos(); // Atualiza a lista na tela
+    } else {
+      alert("Erro ao processar o cancelamento.");
+    }
+  } catch (err) {
+    console.error("Erro:", err);
+    alert("Erro de conexão com o servidor.");
+  }
+}
+
+// Função do Botão Reagendar
+function prepararReagendamento(docId, statusAtual, nome, telefone, servico) {
+  if (statusAtual === "Pendente") {
+    // Se for Pendente: Injeta nome, telefone e serviço, deixando data e hora em branco
+    document.getElementById('nome').value = nome;
+    document.getElementById('telefone').value = telefone;
+    document.getElementById('servico').value = servico;
+    document.getElementById('data').value = "";
+    document.getElementById('horario').value = "";
+
+    // Opcional: Deleta o agendamento antigo pendente para evitar duplicidade ao reenviar, ou você pode tratá-lo no backend.
+    executarCancelamento(docId, "Pendente");
+
+    // Rola a tela suavemente para o formulário de agendamento
+    document.getElementById('formAgendamento').scrollIntoView({ behavior: 'smooth' });
+    alert("Dados carregados no formulário! Escolha a nova data e horário e clique em agendar.");
+
+  } else if (statusAtual === "Aprovado") {
+    // Se for Aprovado: Pede a nova data e horário e envia a solicitação ao banco
+    const novaData = prompt("Digite a nova data desejada (AAAA-MM-DD):");
+    const novoHorario = prompt("Digite o novo horário desejado (HH:MM):");
+
+    if (!novaData || !novoHorario) return;
+
+    enviarSolicitacaoReagendamentoAprovado(docId, statusAtual, novaData, novoHorario);
+  }
+}
+
+async function enviarSolicitacaoReagendamentoAprovado(docId, statusAtual, novaData, novoHorario) {
+  const payload = {
+    user_id: MEU_USER_ID,
+    doc_id: docId,
+    status_atual: statusAtual,
+    nova_data: novaData,
+    novo_horario: novoHorario
+  };
+
+  try {
+    const res = await fetch(`${API_URL}/api/agendamentos/reagendar-aprovado`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      alert(data.mensagem);
+      carregarAgendamentos();
+    } else {
+      alert("Erro ao solicitar reagendamento.");
+    }
+  } catch (err) {
+    console.error("Erro:", err);
+    alert("Erro de conexão com o servidor.");
+  }
+}
 
 // Variáveis Globais de Contato (Iniciadas vazias, sem fallbacks estáticos)
 let telefoneWhatsAppGlobal = '';

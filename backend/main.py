@@ -39,6 +39,13 @@ class AgendaAbrirRequest(BaseModel):
     data: str
     horarios: List[str]
 
+class ReagendarAprovadoRequest(BaseModel):
+    user_id: str
+    doc_id: str
+    status_atual: str
+    nova_data: str
+    novo_horario: str
+
 # -------------------------------------------------------------
 # ROTAS DA API
 # -------------------------------------------------------------
@@ -102,6 +109,22 @@ def obter_contato():
 def atualizar_status(req: StatusUpdateRequest):
     fb.atualizar_status_agendamento(req.user_id, req.doc_id, req.novo_status)
     return {"mensagem": "Status atualizado!"}
+
+# --- CANCELAMENTO CONDICIONAL ---
+@app.delete("/api/agendamentos/cancelar/{user_id}/{doc_id}")
+def cancelar_agendamento_rota(user_id: str, doc_id: str, status: str):
+    resultado = fb.cancelar_agendamento_db(user_id, doc_id, status)
+    if resultado:
+        return resultado
+    raise HTTPException(status_code=500, detail="Erro ao processar cancelamento.")
+
+# --- SOLICITAÇÃO DE REAGENDAMENTO PARA APROVADOS ---
+@app.post("/api/agendamentos/reagendar-aprovado")
+def solicitar_reagendamento_rota(req: ReagendarAprovadoRequest):
+    resultado = fb.solicitar_reagendamento_db(req.user_id, req.doc_id, req.status_atual, req.nova_data, req.novo_horario)
+    if resultado:
+        return resultado
+    raise HTTPException(status_code=400, detail="Não foi possível solicitar o reagendamento.")
 
 @app.delete("/api/agendamentos/{user_id}/{doc_id}")
 def deletar_agendamento(user_id: str, doc_id: str):

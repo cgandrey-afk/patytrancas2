@@ -134,3 +134,38 @@ def remover_horario_agenda(data_str, horario):
 
 def deletar_agenda(data_str):
     db.collection("agenda").document(data_str).delete()
+    
+def cancelar_agendamento_db(user_id: str, doc_id: str, status_atual: str):
+    try:
+        doc_ref = db.collection("usuarios").document(user_id).collection("agendamentos").document(doc_id)
+        if status_atual == "Pendente":
+            # Se for Pendente, deleta fisicamente do banco
+            doc_ref.delete()
+            return {"acao": "deletado", "mensagem": "Agendamento cancelado e removido."}
+        else:
+            # Se for Aprovado, marca a flag e define o status_cancelamento como Pendente
+            doc_ref.update({
+                "pedido_cancelamento": True,
+                "status_cancelamento": "Pendente"
+            })
+            return {"acao": "solicitado", "mensagem": "Solicitação de cancelamento enviada à administração."}
+    except Exception as e:
+        print(f"Erro ao cancelar agendamento: {e}")
+        return None
+
+def solicitar_reagendamento_db(user_id: str, doc_id: str, status_atual: str, nova_data: str, novo_horario: str):
+    try:
+        doc_ref = db.collection("usuarios").document(user_id).collection("agendamentos").document(doc_id)
+        if status_atual == "Aprovado":
+            # Se for Aprovado, adiciona as flags de reagendamento e o status_reag como Pendente
+            doc_ref.update({
+                "pedido_reagendamento": True,
+                "status_reag": "Pendente",
+                "novo_data": nova_data,
+                "novo_horario": novo_horario
+            })
+            return {"acao": "solicitado", "mensagem": "Solicitação de reagendamento enviada à administração."}
+        return None
+    except Exception as e:
+        print(f"Erro ao solicitar reagendamento: {e}")
+        return None
