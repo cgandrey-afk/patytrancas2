@@ -3,112 +3,172 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Paty Tranças | Agendamento & IA</title>
+  <title>Paty Tranças | Especialista em Penteados Afro</title>
   <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <div class="app-layout">
-    <!-- Sidebar / Menu Lateral -->
-    <aside class="sidebar">
-      <div class="brand">
-        <h2>👑 Paty Tranças</h2>
-        <p>Atendimento & Estilo</p>
-      </div>
-      <nav class="menu">
-        <button class="menu-btn active" onclick="trocarAba('aba-agendar', this)">🗓️ Novo Agendamento</button>
-        <button class="menu-btn" onclick="trocarAba('aba-ia', this)">✨ Análise de Foto (IA)</button>
-        <button class="menu-btn" onclick="trocarAba('aba-meus-agendamentos', this)">📋 Meus Agendamentos</button>
+  <!-- Menu de Navegação Fixo -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="#" class="brand-logo">👑 Paty Tranças</a>
+      <nav class="nav-menu">
+        <a href="#home">Início</a>
+        <a href="#servicos">Serviços</a>
+        <a href="#ia">Análise IA</a>
+        <a href="#agendar">Agendar</a>
+        <a href="#meus-agendamentos">Minha Agenda</a>
       </nav>
-    </aside>
+      <a href="#agendar" class="btn-nav-cta">Agendar Horário</a>
+    </div>
+  </header>
 
-    <!-- Área de Conteúdo Principal -->
-    <main class="content">
-
-      <!-- ABA 1: FORMULÁRIO DE AGENDAMENTO -->
-      <section id="aba-agendar" class="aba-panel active">
-        <h1>Agendar Horário</h1>
-        <p class="subtitle">Preencha os dados abaixo para reservar seu atendimento.</p>
-
-        <div class="card">
-          <form id="formAgendamento" onsubmit="agendar(event)">
-            <div class="form-group">
-              <label for="nome">Nome Completo</label>
-              <input type="text" id="nome" placeholder="Ex: Maria Silva" required>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label for="telefone">WhatsApp / Telefone</label>
-                <input type="tel" id="telefone" placeholder="Ex: (19) 99999-9999" required>
-              </div>
-              <div class="form-group">
-                <label for="servico">Modelo / Serviço</label>
-                <select id="servico" required>
-                  <option value="">Selecione o serviço...</option>
-                  <option value="Box Braids">Box Braids</option>
-                  <option value="Nagô Desenhada">Nagô Desenhada</option>
-                  <option value="Goddess Braids">Goddess Braids</option>
-                  <option value="Fulani Braids">Fulani Braids</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label for="data">Data</label>
-                <input type="date" id="data" required>
-              </div>
-              <div class="form-group">
-                <label for="horario">Horário</label>
-                <input type="time" id="horario" required>
-              </div>
-            </div>
-
-            <button type="submit" class="btn-primary">Confirmar Agendamento</button>
-          </form>
-          <div id="mensagemStatus" class="status-msg"></div>
+  <!-- Hero Section -->
+  <section id="home" class="hero">
+    <div class="hero-container">
+      <div class="hero-content">
+        <span class="badge-tag">Atendimento Exclusivo</span>
+        <h1>Realce sua beleza com tranças autênticas e marcantes</h1>
+        <p>Especialista em tranças nagô, box braids e penteados afro. Cuidado, precisão e elegância para o seu estilo único.</p>
+        <div class="hero-btns">
+          <a href="#agendar" class="btn-primary">🗓️ Reservar Meu Horário</a>
+          <a href="#ia" class="btn-secondary">✨ Testar Foto com IA</a>
         </div>
-      </section>
+      </div>
+    </div>
+  </section>
 
-      <!-- ABA 2: ANÁLISE DE FOTO COM IA -->
-      <section id="aba-ia" class="aba-panel">
-        <h1>Análise de Penteado por Foto</h1>
-        <p class="subtitle">Envie uma foto do modelo de trança para a IA estimar tempo e complexidade.</p>
+  <!-- Serviços & Catálogo -->
+  <section id="servicos" class="section-container">
+    <div class="section-title">
+      <h2>Nossos Serviços</h2>
+      <p>Estilos feitos com carinho, técnica impecável e foco no seu bem-estar.</p>
+    </div>
 
-        <div class="card">
+    <div class="grid-servicos">
+      <div class="card-servico">
+        <h3>Box Braids</h3>
+        <p>Tranças individuais clássicas, resistentes e com acabamento alinhado.</p>
+        <span class="price-tag">A partir de R$ 220</span>
+      </div>
+      <div class="card-servico">
+        <h3>Nagô Desenhada</h3>
+        <p>Tranças rasteiras com desenhos geométricos e design exclusivo.</p>
+        <span class="price-tag">A partir de R$ 120</span>
+      </div>
+      <div class="card-servico">
+        <h3>Goddess Braids</h3>
+        <p>Combinação perfeita de tranças nagô/box braids com pontas cacheadas.</p>
+        <span class="price-tag">A partir de R$ 250</span>
+      </div>
+      <div class="card-servico">
+        <h3>Fulani Braids</h3>
+        <p>Inspiradas no estilo tradicional com trança central e acessórios elegantes.</p>
+        <span class="price-tag">A partir de R$ 180</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ferramenta de IA Exclusiva -->
+  <section id="ia" class="section-container bg-highlight">
+    <div class="ia-box">
+      <div class="ia-header">
+        <span class="badge-tag">Tecnologia & Estilo</span>
+        <h2>Análise de Penteado por Foto (IA)</h2>
+        <p>Envie a foto da trança que você deseja fazer e nossa Inteligência Artificial calculará o tempo de produção e a complexidade do modelo!</p>
+      </div>
+
+      <div class="ia-card">
+        <div class="form-group">
+          <label for="fotoInput">Selecione uma imagem do seu celular ou computador:</label>
+          <input type="file" id="fotoInput" accept="image/*" onchange="previewFoto(event)">
+        </div>
+
+        <div id="previewContainer" class="preview-box" style="display: none;">
+          <img id="imgPreview" src="" alt="Pré-visualização">
+        </div>
+
+        <button class="btn-primary btn-full" onclick="analisarFoto()">🔍 Analisar com Gemini IA</button>
+
+        <div id="resultadoIA" class="resultado-ia-card" style="display: none;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Seção de Agendamento -->
+  <section id="agendar" class="section-container">
+    <div class="section-title">
+      <h2>Reserve seu Atendimento</h2>
+      <p>Escolha o serviço, a data e o horário ideal para você.</p>
+    </div>
+
+    <div class="form-card">
+      <form id="formAgendamento" onsubmit="agendar(event)">
+        <div class="form-group">
+          <label for="nome">Seu Nome Completo</label>
+          <input type="text" id="nome" placeholder="Ex: Maria Silva" required>
+        </div>
+
+        <div class="form-row">
           <div class="form-group">
-            <label for="fotoInput">Selecione uma imagem do seu computador/celular:</label>
-            <input type="file" id="fotoInput" accept="image/*" onchange="previewFoto(event)">
+            <label for="telefone">WhatsApp / Celular</label>
+            <input type="tel" id="telefone" placeholder="Ex: (19) 99999-9999" required>
           </div>
-
-          <div id="previewContainer" class="preview-box" style="display: none;">
-            <img id="imgPreview" src="" alt="Pré-visualização">
+          <div class="form-group">
+            <label for="servico">Modelo / Serviço Desejado</label>
+            <select id="servico" required>
+              <option value="">Selecione...</option>
+              <option value="Box Braids">Box Braids</option>
+              <option value="Nagô Desenhada">Nagô Desenhada</option>
+              <option value="Goddess Braids">Goddess Braids</option>
+              <option value="Fulani Braids">Fulani Braids</option>
+            </select>
           </div>
-
-          <button class="btn-primary" onclick="analisarFoto()">Analisar com IA</button>
-
-          <div id="resultadoIA" class="card resultado-ia" style="display: none; margin-top: 20px;"></div>
-        </div>
-      </section>
-
-      <!-- ABA 3: LISTA DE AGENDAMENTOS -->
-      <section id="aba-meus-agendamentos" class="aba-panel">
-        <div class="header-flex">
-          <div>
-            <h1>Agendamentos Salvos</h1>
-            <p class="subtitle">Consulte os horários marcados no sistema.</p>
-          </div>
-          <button class="btn-secondary" onclick="carregarAgendamentos()">🔄 Atualizar</button>
         </div>
 
-        <div id="listaAgendamentos" class="agendamentos-grid">
-          <p style="color: var(--text-muted);">Carregando agendamentos...</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="data">Data de Atendimento</label>
+            <input type="date" id="data" required>
+          </div>
+          <div class="form-group">
+            <label for="horario">Horário</label>
+            <input type="time" id="horario" required>
+          </div>
         </div>
-      </section>
 
-    </main>
-  </div>
+        <button type="submit" class="btn-primary btn-full">✨ Confirmar Agendamento</button>
+      </form>
+      <div id="mensagemStatus" class="status-msg"></div>
+    </div>
+  </section>
+
+  <!-- Meus Agendamentos -->
+  <section id="meus-agendamentos" class="section-container bg-highlight">
+    <div class="section-title">
+      <h2>Agendamentos Salvos</h2>
+      <p>Consulte os horários confirmados no sistema.</p>
+      <button class="btn-secondary" onclick="carregarAgendamentos()" style="margin-top: 15px;">🔄 Atualizar Lista</button>
+    </div>
+
+    <div id="listaAgendamentos" class="agendamentos-grid">
+      <p style="text-align: center; color: var(--text-muted);">Carregando agendamentos...</p>
+    </div>
+  </section>
+
+  <!-- Rodapé -->
+  <footer>
+    <div class="footer-container">
+      <p>👑 <strong>Paty Tranças</strong> — Atendimento humanizado e tranças com amor.</p>
+      <p><small>&copy; 2026 Todos os direitos reservados.</small></p>
+    </div>
+  </footer>
+
+  <!-- Botão Flutuante do WhatsApp -->
+  <a href="https://wa.me/5519999999999?text=Olá,%20gostaria%20de%20tirar%20uma%20dúvida!" class="whatsapp-float" target="_blank" title="Falar no WhatsApp">
+    📱
+  </a>
 
   <script src="script.js"></script>
 </body>
