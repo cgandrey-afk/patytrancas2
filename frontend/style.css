@@ -107,7 +107,7 @@ h1, h2, h3 {
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-/* Hero Section (Área dos Banners Responsivos) */
+/* Hero Section (Área dos Banners Responsivos com Bordas Arredondadas) */
 .hero {
   padding-top: 85px;
   padding-bottom: 20px;
@@ -126,7 +126,7 @@ h1, h2, h3 {
   display: block;
   text-decoration: none;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: 20px;
   box-shadow: var(--shadow);
   transition: transform 0.2s ease;
 }
@@ -139,7 +139,7 @@ h1, h2, h3 {
   width: 100%;
   height: auto;
   display: block;
-  border-radius: 16px;
+  border-radius: 20px;
   object-fit: cover;
 }
 
@@ -364,24 +364,26 @@ footer {
   }
 
   .hero-container {
-    padding: 0 10px;
+    padding: 0 12px;
+  }
+
+  .banner-link,
+  .hero-banner-img {
+    border-radius: 16px;
   }
 
   .form-row { 
     grid-template-columns: 1fr; 
   }
 
-  /* Esconde o botão 'Agendar Horário' no topo no celular */
   .btn-nav-cta {
     display: none;
   }
 
-  /* Exibe o botão 'Menu' estilo pílula */
   .btn-menu-toggle {
     display: block;
   }
 
-  /* Caixa Flutuante Branca do Menu Mobile */
   .nav-menu {
     display: none;
     position: absolute;
@@ -398,7 +400,6 @@ footer {
     z-index: 1001;
   }
 
-  /* Exibe a caixa quando ativa pelo JavaScript */
   .nav-menu.open {
     display: flex;
   }
