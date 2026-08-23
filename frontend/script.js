@@ -284,11 +284,25 @@ let telefoneWhatsAppGlobal = '5519995296119';
 let instagramUrlGlobal = 'https://www.instagram.com/patydastrancas/';
 let enderecoGlobal = 'Campinas, SP';
 
+let telefoneWhatsAppGlobal = '5519995296119';
+let instagramUrlGlobal = 'https://www.instagram.com/patydastrancas/';
+let enderecoGlobal = 'Campinas, SP';
+
 async function carregarContato() {
+  console.log("🔍 [DEBUG] Iniciando o carregamento de contato...");
+  console.log("🔍 [DEBUG] API_URL configurada:", typeof API_URL !== 'undefined' ? API_URL : "API_URL não definida!");
+
   try {
-    const res = await fetch(`${API_URL}/api/contato`);
+    const urlCompleta = `${API_URL}/api/contato`;
+    console.log("🔍 [DEBUG] Fazendo fetch para:", urlCompleta);
+
+    const res = await fetch(urlCompleta);
+    console.log("🔍 [DEBUG] Resposta recebida. Status:", res.status, res.statusText);
+
     if (res.ok) {
       const data = await res.json();
+      console.log("✅ [DEBUG] Dados de contato obtidos do banco com sucesso:", data);
+
       if (data) {
         if (data.whatsapp) {
           telefoneWhatsAppGlobal = data.whatsapp.replace(/\D/g, '');
@@ -304,10 +318,17 @@ async function carregarContato() {
           }
         }
       }
+    } else {
+      console.warn("⚠️ [DEBUG] O servidor respondeu, mas com erro HTTP:", res.status);
     }
   } catch (err) {
-    console.error("Erro ao carregar dados de contato:", err);
+    console.error("❌ [DEBUG] Erro crítico ao tentar buscar contato (Falha na requisição / CORS / Servidor desligado):", err);
   } finally {
+    console.log("🔍 [DEBUG] Aplicando valores finais aos botões...");
+    console.log("   - WhatsApp:", telefoneWhatsAppGlobal);
+    console.log("   - Instagram:", instagramUrlGlobal);
+    console.log("   - Endereço:", enderecoGlobal);
+
     // Atualiza o botão flutuante do WhatsApp
     const btnWhatsapp = document.getElementById('btnWhatsappFlutuante');
     if (btnWhatsapp) {
