@@ -213,10 +213,12 @@ h1, h2, h3 {
 }
 
 .brand-logo-img {
-  height: 40px;          /* Altura máxima para não esticar a navbar */
-  width: auto;           /* Mantém a proporção da largura */
-  max-width: 150px;      /* Evita logos muito largos */
+  height: 55px !important;       /* Aumentado de 40px para 55px */
+  width: auto !important;
+  max-width: 180px;             /* Aumentado o limite de largura */
+  border-radius: 12px;          /* Arredonda as bordas da logo */
   object-fit: contain;
+  display: block !important;
 }
 
 .card-servico p {
