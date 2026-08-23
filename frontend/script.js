@@ -81,7 +81,7 @@ async function carregarServicos() {
     if (res.ok) {
       listaServicosGlobal = await res.json();
       
-      // Monta os cards na tela com o tempo de confecção e durabilidade
+      // Monta os cards na tela com os rótulos atualizados
       if (container) {
         container.innerHTML = listaServicosGlobal.map((item, index) => `
           <div class="card-servico" onclick="abrirModalServico(${index})">
@@ -90,7 +90,7 @@ async function carregarServicos() {
             <p>${item.descricao_curta}</p>
             
             <div class="info-rapida-servico">
-              <span>⏱️ <strong>Fazer:</strong> ${item.tempo_fazer || 'Sob consulta'}</span><br>
+              <span>⏱️ <strong>Execução:</strong> ${item.tempo_fazer || 'Sob consulta'}</span><br>
               <span>⏳ <strong>Duração:</strong> ${item.durabilidade || 'Sob consulta'}</span>
             </div>
 
@@ -119,10 +119,10 @@ function abrirModalServico(index) {
   document.getElementById('modalFoto').src = item.foto_url;
   document.getElementById('modalPreco').innerText = item.preco;
   
-  // Exibe a descrição detalhada junto do tempo de produção e durabilidade
+  // Exibe a descrição detalhada com o novo rótulo
   document.getElementById('modalDescricaoLonga').innerHTML = `
     ${item.descricao_longa || item.descricao_curta}<br><br>
-    <strong>⏱️ Tempo de Produção:</strong> ${item.tempo_fazer || 'Sob consulta'}<br>
+    <strong>⏱️ Tempo de Execução:</strong> ${item.tempo_fazer || 'Sob consulta'}<br>
     <strong>⏳ Durabilidade no Cabelo:</strong> ${item.durabilidade || 'Sob consulta'}
   `;
   
