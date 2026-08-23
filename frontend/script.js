@@ -16,6 +16,24 @@ function fecharMenuMobile() {
   }
 }
 
+// Busca a logo dinâmica no servidor
+async function carregarLogo() {
+  try {
+    const res = await fetch(`${API_URL}/api/logo`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.ativo !== false && data.logo_url) {
+        const container = document.getElementById('brandLogoContainer');
+        if (container) {
+          container.innerHTML = `<img src="${data.logo_url}" alt="Paty Tranças" class="brand-logo-img">`;
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Erro ao carregar logo:", err);
+  }
+}
+
 // Busca os banners dinâmicos no servidor
 async function carregarBanners() {
   try {
@@ -166,6 +184,7 @@ async function agendar(e) {
     if (res.ok) {
       statusDiv.innerHTML = "<p style='color:#22c55e;'>✅ Agendamento realizado com sucesso!</p>";
       document.getElementById('formAgendamento').reset();
+      carregarAgendamentos(); // Atualiza a lista na tela imediatamente após agendar
     } else {
       statusDiv.innerHTML = "<p style='color:#ef4444;'>❌ Não foi possível realizar o agendamento.</p>";
     }
@@ -205,8 +224,10 @@ async function carregarAgendamentos() {
   }
 }
 
-// Evento de inicialização unificado da aplicação
+// Inicialização única ao carregar o documento
 document.addEventListener("DOMContentLoaded", () => {
+  carregarLogo();
   carregarBanners();
   carregarServicos();
+  carregarAgendamentos();
 });

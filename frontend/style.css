@@ -206,6 +206,19 @@ h1, h2, h3 {
   border-radius: 8px;
 }
 
+.brand-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.brand-logo-img {
+  height: 40px;          /* Altura máxima para não esticar a navbar */
+  width: auto;           /* Mantém a proporção da largura */
+  max-width: 150px;      /* Evita logos muito largos */
+  object-fit: contain;
+}
+
 .card-servico p {
   color: var(--text-muted);
   font-size: 0.9rem;

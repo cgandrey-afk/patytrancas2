@@ -76,6 +76,13 @@ def criar_agendamento(req: AgendamentoRequest):
         fb.remover_horario_agenda(req.data_agendamento, req.horario)
         return {"mensagem": "Agendamento realizado com sucesso!"}
     raise HTTPException(status_code=500, detail="Erro ao salvar agendamento.")
+    
+@app.get("/api/logo")
+def obter_logo():
+    logo = fb.buscar_logo()
+    if logo:
+        return logo
+    raise HTTPException(status_code=404, detail="Logo não encontrada.")    
 
 @app.put("/api/agendamentos/status")
 def atualizar_status(req: StatusUpdateRequest):

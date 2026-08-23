@@ -43,6 +43,16 @@ def salvar_agendamento(nome, telefone, servico, data_agend, horario):
     db.collection("agendamentos").add(novo_registro)
     return True
     
+def buscar_logo():
+    try:
+        doc = db.collection("configuracoes").document("logo").get()
+        if doc.exists:
+            return doc.to_dict()
+        return None
+    except Exception as e:
+        print(f"Erro ao buscar logo: {e}")
+        return None
+    
 def carregar_servicos():
     try:
         docs = db.collection("servicos").stream()
