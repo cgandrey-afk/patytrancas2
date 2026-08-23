@@ -221,6 +221,15 @@ h1, h2, h3 {
   display: block !important;
 }
 
+.info-rapida-servico {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  background-color: var(--bg-main);
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
 .card-servico p {
   color: var(--text-muted);
   font-size: 0.9rem;

@@ -81,13 +81,19 @@ async function carregarServicos() {
     if (res.ok) {
       listaServicosGlobal = await res.json();
       
-      // Monta os cards na tela
+      // Monta os cards na tela com o tempo de confecção e durabilidade
       if (container) {
         container.innerHTML = listaServicosGlobal.map((item, index) => `
           <div class="card-servico" onclick="abrirModalServico(${index})">
             <h3>${item.nome}</h3>
             <img src="${item.foto_url}" alt="${item.nome}" class="card-servico-img">
             <p>${item.descricao_curta}</p>
+            
+            <div class="info-rapida-servico">
+              <span>⏱️ <strong>Fazer:</strong> ${item.tempo_fazer || 'Sob consulta'}</span><br>
+              <span>⏳ <strong>Duração:</strong> ${item.durabilidade || 'Sob consulta'}</span>
+            </div>
+
             <span class="price-tag">${item.preco}</span>
           </div>
         `).join('');
@@ -112,7 +118,13 @@ function abrirModalServico(index) {
   document.getElementById('modalNome').innerText = item.nome;
   document.getElementById('modalFoto').src = item.foto_url;
   document.getElementById('modalPreco').innerText = item.preco;
-  document.getElementById('modalDescricaoLonga').innerText = item.descricao_longa || item.descricao_curta;
+  
+  // Exibe a descrição detalhada junto do tempo de produção e durabilidade
+  document.getElementById('modalDescricaoLonga').innerHTML = `
+    ${item.descricao_longa || item.descricao_curta}<br><br>
+    <strong>⏱️ Tempo de Produção:</strong> ${item.tempo_fazer || 'Sob consulta'}<br>
+    <strong>⏳ Durabilidade no Cabelo:</strong> ${item.durabilidade || 'Sob consulta'}
+  `;
   
   // Seleciona automaticamente esse serviço no formulário
   const selectServico = document.getElementById('servico');
