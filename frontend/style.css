@@ -200,10 +200,10 @@ h1, h2, h3 {
 
 .card-servico-img {
   width: 100%;
-  height: 180px;
-  object-fit: cover;
-  border-radius: 12px;
-  margin: 12px 0;
+  height: 200px;              /* Altura fixa padrão da caixa */
+  object-fit: contain;        /* Mantém a foto inteira sem cortar nada */
+  object-position: center;     /* Centraliza a imagem no container */
+  background-color: #f8f8f8;  /* Cor de fundo para as sobras das laterais/topo */
 }
 
 .card-servico p {
