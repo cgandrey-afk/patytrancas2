@@ -16,6 +16,28 @@ function fecharMenuMobile() {
   }
 }
 
+// Busca os banners dinâmicos no servidor
+async function carregarBanners() {
+  try {
+    const res = await fetch(`${API_URL}/api/banners`);
+    if (res.ok) {
+      const data = await res.json();
+      
+      if (data && data.ativo !== false) {
+        const desktopImg = document.getElementById('bannerDesktopImg');
+        const mobileSource = document.getElementById('bannerMobileSource');
+        const bannerLink = document.getElementById('bannerLink');
+
+        if (desktopImg && data.desktop_url) desktopImg.src = data.desktop_url;
+        if (mobileSource && data.mobile_url) mobileSource.srcset = data.mobile_url;
+        if (bannerLink && data.link) bannerLink.href = data.link;
+      }
+    }
+  } catch (err) {
+    console.error("Erro ao carregar banners:", err);
+  }
+}
+
 function previewFoto(event) {
   const file = event.target.files[0];
   if (file) {
@@ -96,6 +118,8 @@ async function agendar(e) {
 
 async function carregarAgendamentos() {
   const container = document.getElementById('listaAgendamentos');
+  if (!container) return;
+  
   container.innerHTML = "Buscando agendamentos...";
 
   try {
@@ -122,3 +146,8 @@ async function carregarAgendamentos() {
     container.innerHTML = "<p style='color:#ef4444;'>Erro ao carregar os agendamentos.</p>";
   }
 }
+
+// Inicializa a busca dos banners assim que a página é carregada
+document.addEventListener("DOMContentLoaded", () => {
+  carregarBanners();
+});

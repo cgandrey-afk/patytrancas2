@@ -45,6 +45,14 @@ class AgendaAbrirRequest(BaseModel):
 def home():
     return {"status": "online", "app": "Paty Tranças API"}
 
+# --- BANNERS DINÂMICOS ---
+@app.get("/api/banners")
+def obter_banners():
+    banners = fb.buscar_banners()
+    if banners:
+        return banners
+    raise HTTPException(status_code=404, detail="Configuração de banners não encontrada.")
+
 # --- AGENDAMENTOS ---
 @app.get("/api/agendamentos")
 def listar_agendamentos():

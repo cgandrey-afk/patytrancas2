@@ -32,17 +32,15 @@
 
   <!-- Hero Section com Banners Responsivos -->
   <section id="home" class="hero">
-    <div class="hero-container">
-      <a href="#agendar" class="banner-link">
-        <picture>
-          <!-- Banner para telas menores (Celular) -->
-          <source media="(max-width: 768px)" srcset="banner-mobile.jpg">
-          <!-- Banner padrão para telas maiores (PC/Notebook) -->
-          <img src="banner-desktop.jpg" alt="Paty Tranças - Atendimento Exclusivo" class="hero-banner-img">
-        </picture>
-      </a>
-    </div>
-  </section>
+  <div class="hero-container">
+    <a id="bannerLink" href="#agendar" class="banner-link">
+      <picture>
+        <source id="bannerMobileSource" media="(max-width: 768px)" srcset="">
+        <img id="bannerDesktopImg" src="" alt="Paty Tranças - Banner Principal" class="hero-banner-img">
+      </picture>
+    </a>
+  </div>
+</section>
 
   <!-- Serviços & Catálogo -->
   <section id="servicos" class="section-container">

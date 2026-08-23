@@ -42,6 +42,13 @@ def salvar_agendamento(nome, telefone, servico, data_agend, horario):
     }
     db.collection("agendamentos").add(novo_registro)
     return True
+    
+def buscar_banners():
+    doc_ref = db.collection("configuracoes").document("banners")
+    doc = doc_ref.get()
+    if doc.exists:
+        return doc.to_dict()
+    return {"ativo": False}
 
 def atualizar_status_agendamento(doc_id, novo_status):
     db.collection("agendamentos").document(doc_id).update({"status": novo_status})
