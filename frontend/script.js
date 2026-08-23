@@ -40,23 +40,34 @@ async function carregarBanners() {
 
 let listaServicosGlobal = [];
 
+// Busca serviços no banco e preenche a tela + o select do formulário
 async function carregarServicos() {
   const container = document.getElementById('gridServicos');
-  if (!container) return;
+  const selectServico = document.getElementById('servico');
 
   try {
     const res = await fetch(`${API_URL}/api/servicos`);
     if (res.ok) {
       listaServicosGlobal = await res.json();
       
-      container.innerHTML = listaServicosGlobal.map((item, index) => `
-        <div class="card-servico" onclick="abrirModalServico(${index})">
-          <h3>${item.nome}</h3>
-          <img src="${item.foto_url}" alt="${item.nome}" class="card-servico-img">
-          <p>${item.descricao_curta}</p>
-          <span class="price-tag">${item.preco}</span>
-        </div>
-      `).join('');
+      // Monta os cards na tela
+      if (container) {
+        container.innerHTML = listaServicosGlobal.map((item, index) => `
+          <div class="card-servico" onclick="abrirModalServico(${index})">
+            <h3>${item.nome}</h3>
+            <img src="${item.foto_url}" alt="${item.nome}" class="card-servico-img">
+            <p>${item.descricao_curta}</p>
+            <span class="price-tag">${item.preco}</span>
+          </div>
+        `).join('');
+      }
+
+      // Preenche o campo de seleção do formulário de agendamento
+      if (selectServico && listaServicosGlobal.length > 0) {
+        selectServico.innerHTML = listaServicosGlobal.map(item => `
+          <option value="${item.nome}">${item.nome} (${item.preco})</option>
+        `).join('');
+      }
     }
   } catch (err) {
     console.error("Erro ao carregar serviços:", err);
@@ -72,7 +83,7 @@ function abrirModalServico(index) {
   document.getElementById('modalPreco').innerText = item.preco;
   document.getElementById('modalDescricaoLonga').innerText = item.descricao_longa || item.descricao_curta;
   
-  // Pré-seleciona o serviço no formulário de agendamento se o campo existir
+  // Seleciona automaticamente esse serviço no formulário
   const selectServico = document.getElementById('servico');
   if (selectServico) selectServico.value = item.nome;
 
@@ -80,16 +91,10 @@ function abrirModalServico(index) {
 }
 
 function fecharModalServico(e, forcar = false) {
-  if (forcar || e.target.id === 'modalServico') {
+  if (forcar || (e && e.target.id === 'modalServico')) {
     document.getElementById('modalServico').style.display = 'none';
   }
 }
-
-// Atualize seu DOMContentLoaded para rodar a função
-document.addEventListener("DOMContentLoaded", () => {
-  carregarBanners();
-  carregarServicos();
-});
 
 function previewFoto(event) {
   const file = event.target.files[0];
@@ -200,7 +205,8 @@ async function carregarAgendamentos() {
   }
 }
 
-// Inicializa a busca dos banners assim que a página é carregada
+// Evento de inicialização unificado da aplicação
 document.addEventListener("DOMContentLoaded", () => {
   carregarBanners();
+  carregarServicos();
 });
