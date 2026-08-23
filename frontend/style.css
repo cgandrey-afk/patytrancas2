@@ -50,6 +50,7 @@ h1, h2, h3 {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
 }
 
 .brand-logo {
@@ -90,6 +91,20 @@ h1, h2, h3 {
 
 .btn-nav-cta:hover {
   background-color: var(--primary-hover);
+}
+
+/* Botão Menu estilo pílula (Oculto no PC) */
+.btn-menu-toggle {
+  display: none;
+  background-color: #ffffff;
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  padding: 8px 22px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 /* Hero Section */
@@ -348,10 +363,55 @@ footer {
   z-index: 1000;
 }
 
-/* Responsividade Celular */
+/* =============================================================
+   RESPONSIVIDADE PARA CELULAR (SUBSTITUI O BLOCO ANTERIOR)
+   ============================================================= */
 @media (max-width: 768px) {
-  .nav-menu { display: none; }
   .hero h1 { font-size: 2rem; }
   .form-row { grid-template-columns: 1fr; }
   .hero-btns { flex-direction: column; }
+
+  /* Esconde o botão 'Agendar Horário' no topo no celular */
+  .btn-nav-cta {
+    display: none;
+  }
+
+  /* Exibe o botão 'Menu' estilo pílula */
+  .btn-menu-toggle {
+    display: block;
+  }
+
+  /* Caixa Flutuante Branca do Menu Mobile (Igual ao Print) */
+  .nav-menu {
+    display: none;
+    position: absolute;
+    top: 60px;
+    left: 15px;
+    right: 15px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    z-index: 1001;
+  }
+
+  /* Exibe a caixa quando ativa pelo JavaScript */
+  .nav-menu.open {
+    display: flex;
+  }
+
+  .nav-menu a {
+    font-size: 1.05rem;
+    font-weight: 500;
+    padding: 10px 0;
+    border-bottom: 1px solid #f2f2f2;
+    color: var(--text-main);
+  }
+
+  .nav-menu a:last-child {
+    border-bottom: none;
+  }
 }

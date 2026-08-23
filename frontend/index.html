@@ -13,13 +13,19 @@
   <header class="navbar">
     <div class="nav-container">
       <a href="#" class="brand-logo">👑 Paty Tranças</a>
-      <nav class="nav-menu">
-        <a href="#home">Início</a>
-        <a href="#servicos">Serviços</a>
-        <a href="#ia">Análise IA</a>
-        <a href="#agendar">Agendar</a>
-        <a href="#meus-agendamentos">Minha Agenda</a>
+      
+      <!-- Botão Menu visível apenas no Celular -->
+      <button class="btn-menu-toggle" onclick="toggleMenuMobile()">Menu</button>
+
+      <!-- Caixa do Menu (desktop normal / modal no mobile) -->
+      <nav class="nav-menu" id="navMenu">
+        <a href="#home" onclick="fecharMenuMobile()">Início</a>
+        <a href="#servicos" onclick="fecharMenuMobile()">Serviços</a>
+        <a href="#ia" onclick="fecharMenuMobile()">Análise IA</a>
+        <a href="#agendar" onclick="fecharMenuMobile()">Agendar</a>
+        <a href="#meus-agendamentos" onclick="fecharMenuMobile()">Minha Agenda</a>
       </nav>
+
       <a href="#agendar" class="btn-nav-cta">Agendar Horário</a>
     </div>
   </header>

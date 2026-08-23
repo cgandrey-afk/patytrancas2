@@ -1,14 +1,18 @@
 const API_URL = "https://patytrancas2.onrender.com";
 
-function trocarAba(abaId, elementoBtn) {
-  document.querySelectorAll('.aba-panel').forEach(panel => panel.classList.remove('active'));
-  document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
+// Alterna a exibição do menu estilo pílula no celular
+function toggleMenuMobile() {
+  const menu = document.getElementById('navMenu');
+  if (menu) {
+    menu.classList.toggle('open');
+  }
+}
 
-  document.getElementById(abaId).classList.add('active');
-  elementoBtn.classList.add('active');
-
-  if (abaId === 'aba-meus-agendamentos') {
-    carregarAgendamentos();
+// Fecha a caixa do menu mobile ao clicar em qualquer item
+function fecharMenuMobile() {
+  const menu = document.getElementById('navMenu');
+  if (menu) {
+    menu.classList.remove('open');
   }
 }
 
@@ -45,7 +49,7 @@ async function analisarFoto() {
 
     if (res.ok) {
       divResultado.innerHTML = `
-        <h3 style="color:#a855f7; margin-bottom:10px;">✨ Análise Concluída</h3>
+        <h3 style="color:#c25975; margin-bottom:10px;">✨ Análise Concluída</h3>
         <p><strong>Estilo Identificado:</strong> ${data.estilo_identificado || 'Não especificado'}</p>
         <p><strong>Dificuldade:</strong> ${data.dificuldade || 'Média'}</p>
         <p><strong>Tempo Estimado:</strong> ${data.tempo_estimado_minutos || '--'} minutos</p>
