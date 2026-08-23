@@ -252,6 +252,43 @@ async function carregarAgendamentos() {
   }
 }
 
+
+let telefoneWhatsAppGlobal = '5519995296119'; // Valor padrão de fallback
+
+async function carregarContato() {
+  try {
+    const res = await fetch(`${API_URL}/api/contato`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.whatsapp) {
+        // Remove qualquer caractere que não seja número
+        telefoneWhatsAppGlobal = data.whatsapp.replace(/\D/g, '');
+        
+        // Atualiza textos visíveis de telefone na tela (caso existam)
+        const elementosTelefone = document.querySelectorAll('.texto-telefone-whatsapp');
+        elementosTelefone.forEach(el => {
+          el.innerText = data.telefone_formatado || data.whatsapp;
+        });
+      }
+    }
+  } catch (err) {
+    console.error("Erro ao carregar dados de contato:", err);
+  }
+}
+
+// Função de envio do agendamento montando a URL com o número vindo do Firestore
+function enviarAgendamentoWhatsApp(dados) {
+  const mensagem = encodeURIComponent(
+    `Olá, Paty! Gostaria de agendar um horário.\n\n` +
+    `👤 *Nome:* ${dados.nome}\n` +
+    `💇 *Serviço:* ${dados.servico}\n` +
+    `📅 *Data:* ${dados.data}\n` +
+    `⏰ *Horário:* ${dados.horario}`
+  );
+
+  window.open(`https://wa.me/${telefoneWhatsAppGlobal}?text=${mensagem}`, '_blank');
+}
+
 // Inicialização única ao carregar o documento
 document.addEventListener("DOMContentLoaded", () => {
   carregarLogo();
