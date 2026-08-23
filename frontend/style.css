@@ -54,11 +54,22 @@ h1, h2, h3 {
 }
 
 .brand-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
   font-family: 'Playfair Display', serif;
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--primary);
-  text-decoration: none;
+}
+
+.brand-logo-img {
+  height: 55px !important;
+  width: auto !important;
+  max-width: 180px;
+  border-radius: 12px;
+  object-fit: contain;
+  display: block !important;
 }
 
 .nav-menu {
@@ -107,7 +118,7 @@ h1, h2, h3 {
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-/* Hero Section (Área dos Banners Responsivos com Bordas Arredondadas) */
+/* Hero Section (Área dos Banners Responsivos) */
 .hero {
   padding-top: 85px;
   padding-bottom: 20px;
@@ -196,29 +207,23 @@ h1, h2, h3 {
 .card-servico h3 {
   font-size: 1.3rem;
   color: var(--text-main);
+  margin-bottom: 10px;
 }
 
 .card-servico-img {
   width: 100%;
-  aspect-ratio: 4 / 5;       /* Proporção ideal para fotos verticais de celular */
-  object-fit: cover;         /* Preenche o espaço com enquadramento natural */
-  object-position: top center; /* Foca no topo (cabeça/cabelo) para não cortar a trança */
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  object-position: top center;
   border-radius: 8px;
+  margin-bottom: 12px;
 }
 
-.brand-logo {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-}
-
-.brand-logo-img {
-  height: 55px !important;       /* Aumentado de 40px para 55px */
-  width: auto !important;
-  max-width: 180px;             /* Aumentado o limite de largura */
-  border-radius: 12px;          /* Arredonda as bordas da logo */
-  object-fit: contain;
-  display: block !important;
+.card-servico p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+  flex-grow: 1;
 }
 
 .info-rapida-servico {
@@ -228,22 +233,6 @@ h1, h2, h3 {
   background-color: var(--bg-main);
   padding: 8px 12px;
   border-radius: 8px;
-}
-
-#modalDescricaoLonga small {
-  font-size: 0.8rem;
-  background-color: rgba(0, 0, 0, 0.04);
-  padding: 8px 10px;
-  border-left: 3px solid #e67e22;
-  border-radius: 4px;
-  margin-top: 8px;
-}
-
-.card-servico p {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  margin-bottom: 15px;
-  flex-grow: 1;
 }
 
 .price-tag {
@@ -288,6 +277,15 @@ h1, h2, h3 {
   object-fit: cover;
   border-radius: 14px;
   margin-bottom: 15px;
+}
+
+#modalDescricaoLonga small {
+  font-size: 0.8rem;
+  background-color: rgba(0, 0, 0, 0.04);
+  padding: 8px 10px;
+  border-left: 3px solid #e67e22;
+  border-radius: 4px;
+  margin-top: 8px;
 }
 
 .btn-close {
@@ -432,40 +430,48 @@ footer {
   color: var(--text-muted);
 }
 
-/* Botão Flutuante WhatsApp */
-.whatsapp-float {
+/* Botões Flutuantes (WhatsApp + Instagram) */
+.social-float-container {
   position: fixed;
-  width: 60px;
-  height: 60px;
   bottom: 25px;
   right: 25px;
-  background-color: #25d366;
-  color: #FFF;
-  border-radius: 50px;
-  text-align: center;
-  font-size: 32px;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   z-index: 1000;
+}
+
+.social-float {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  color: #ffffff !important;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 28px;
   text-decoration: none;
+  box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.25);
   transition: transform 0.2s ease-in-out;
 }
 
-.whatsapp-float:hover {
+.social-float:hover {
   transform: scale(1.1);
-  color: #FFF;
 }
 
-.whatsapp-float i {
+.whatsapp-float {
+  background-color: #25d366;
+}
+
+.instagram-float {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+
+.social-float i {
   color: #ffffff !important;
-  font-size: 34px;
 }
 
-/* =============================================================
-   RESPONSIVIDADE PARA CELULAR
-   ============================================================= */
+/* Responsividade Mobile */
 @media (max-width: 768px) {
   .hero {
     padding-top: 75px;

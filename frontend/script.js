@@ -252,17 +252,24 @@ async function carregarAgendamentos() {
   }
 }
 
-let telefoneWhatsAppGlobal = '5519995296119'; // Fallback padrão
+// Fallbacks padrão caso o banco de dados não responda
+let telefoneWhatsAppGlobal = '5519995296119';
+let instagramUrlGlobal = 'https://www.instagram.com';
 
 async function carregarContato() {
   try {
     const res = await fetch(`${API_URL}/api/contato`);
     if (res.ok) {
       const data = await res.json();
-      if (data && data.whatsapp) {
-        // Remove qualquer caractere que não seja número
-        telefoneWhatsAppGlobal = data.whatsapp.replace(/\D/g, '');
-        
+      if (data) {
+        if (data.whatsapp) {
+          // Remove qualquer caractere que não seja número
+          telefoneWhatsAppGlobal = data.whatsapp.replace(/\D/g, '');
+        }
+        if (data.instagram_url) {
+          instagramUrlGlobal = data.instagram_url;
+        }
+
         // Atualiza textos visíveis de telefone na tela (caso existam)
         const elementosTelefone = document.querySelectorAll('.texto-telefone-whatsapp');
         elementosTelefone.forEach(el => {
@@ -273,11 +280,17 @@ async function carregarContato() {
   } catch (err) {
     console.error("Erro ao carregar dados de contato:", err);
   } finally {
-    // Atualiza o link do botão flutuante com o número obtido ou o fallback
-    const btnFlutuante = document.getElementById('btnWhatsappFlutuante');
-    if (btnFlutuante) {
+    // Atualiza o botão flutuante do WhatsApp
+    const btnWhatsapp = document.getElementById('btnWhatsappFlutuante');
+    if (btnWhatsapp) {
       const mensagemPadrao = encodeURIComponent("Olá, Paty! Gostaria de tirar uma dúvida.");
-      btnFlutuante.href = `https://wa.me/${telefoneWhatsAppGlobal}?text=${mensagemPadrao}`;
+      btnWhatsapp.href = `https://wa.me/${telefoneWhatsAppGlobal}?text=${mensagemPadrao}`;
+    }
+
+    // Atualiza o botão flutuante do Instagram
+    const btnInstagram = document.getElementById('btnInstagramFlutuante');
+    if (btnInstagram) {
+      btnInstagram.href = instagramUrlGlobal;
     }
   }
 }
