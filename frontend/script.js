@@ -279,11 +279,7 @@ function resetarTemporizadorInatividade() {
   window.addEventListener(evento, resetarTemporizadorInatividade, { passive: true });
 });
 
-// Fallbacks padrão caso o banco de dados não responda
-let telefoneWhatsAppGlobal = '5519995296119';
-let instagramUrlGlobal = 'https://www.instagram.com/patydastrancas/';
-let enderecoGlobal = 'Campinas, SP';
-
+// Variáveis Globais de Contato (Declaradas apenas uma vez)
 let telefoneWhatsAppGlobal = '5519995296119';
 let instagramUrlGlobal = 'https://www.instagram.com/patydastrancas/';
 let enderecoGlobal = 'Campinas, SP';
