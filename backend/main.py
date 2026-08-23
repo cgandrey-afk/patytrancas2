@@ -57,6 +57,10 @@ def obter_banners():
 @app.get("/api/agendamentos")
 def listar_agendamentos():
     return fb.carregar_agendamentos()
+    
+@app.get("/api/servicos")
+def listar_servicos():
+    return fb.carregar_servicos()
 
 @app.post("/api/agendamentos")
 def criar_agendamento(req: AgendamentoRequest):

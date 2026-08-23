@@ -43,35 +43,27 @@
 </section>
 
   <!-- Serviços & Catálogo -->
-  <section id="servicos" class="section-container">
-    <div class="section-title">
-      <h2>Nossos Serviços</h2>
-      <p>Estilos feitos com carinho, técnica impecável e foco no seu bem-estar.</p>
-    </div>
+	<section id="servicos" class="section-container">
+	  <div class="section-title">
+		<h2>Nossos Serviços</h2>
+		<p>Escolha o estilo ideal para você</p>
+	  </div>
+	  <div id="gridServicos" class="grid-servicos">
+		<!-- Os cards serão inseridos aqui pelo JS -->
+	  </div>
+	</section>
 
-    <div class="grid-servicos">
-      <div class="card-servico">
-        <h3>Box Braids</h3>
-        <p>Tranças individuais clássicas, resistentes e com acabamento alinhado.</p>
-        <span class="price-tag">A partir de R$ 220</span>
-      </div>
-      <div class="card-servico">
-        <h3>Nagô Desenhada</h3>
-        <p>Tranças rasteiras com desenhos geométricos e design exclusivo.</p>
-        <span class="price-tag">A partir de R$ 120</span>
-      </div>
-      <div class="card-servico">
-        <h3>Goddess Braids</h3>
-        <p>Combinação perfeita de tranças nagô/box braids com pontas cacheadas.</p>
-        <span class="price-tag">A partir de R$ 250</span>
-      </div>
-      <div class="card-servico">
-        <h3>Fulani Braids</h3>
-        <p>Inspiradas no estilo tradicional com trança central e acessórios elegantes.</p>
-        <span class="price-tag">A partir de R$ 180</span>
-      </div>
-    </div>
-  </section>
+	<!-- Modal com os detalhes do serviço -->
+	<div id="modalServico" class="modal-overlay" onclick="fecharModalServico(event)">
+	  <div class="modal-card">
+		<button class="btn-close" onclick="fecharModalServico(null, true)">&times;</button>
+		<img id="modalFoto" src="" alt="Foto da trança" class="modal-img">
+		<h2 id="modalNome"></h2>
+		<p id="modalPreco" class="price-tag" style="margin: 10px 0;"></p>
+		<p id="modalDescricaoLonga" style="color: var(--text-muted); margin-bottom: 20px;"></p>
+		<a href="#agendar" class="btn-primary btn-full" onclick="fecharModalServico(null, true)">Agendar este Serviço</a>
+	  </div>
+	</div>
 
   <!-- Ferramenta de IA Exclusiva -->
   <section id="ia" class="section-container bg-highlight">

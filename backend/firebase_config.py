@@ -43,6 +43,15 @@ def salvar_agendamento(nome, telefone, servico, data_agend, horario):
     db.collection("agendamentos").add(novo_registro)
     return True
     
+def carregar_servicos():
+    docs = db.collection("servicos").stream()
+    lista = []
+    for doc in docs:
+        d = doc.to_dict()
+        d["id"] = doc.id
+        lista.append(d)
+    return lista
+    
 def buscar_banners():
     doc_ref = db.collection("configuracoes").document("banners")
     doc = doc_ref.get()

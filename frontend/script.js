@@ -38,6 +38,59 @@ async function carregarBanners() {
   }
 }
 
+let listaServicosGlobal = [];
+
+async function carregarServicos() {
+  const container = document.getElementById('gridServicos');
+  if (!container) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/servicos`);
+    if (res.ok) {
+      listaServicosGlobal = await res.json();
+      
+      container.innerHTML = listaServicosGlobal.map((item, index) => `
+        <div class="card-servico" onclick="abrirModalServico(${index})">
+          <h3>${item.nome}</h3>
+          <img src="${item.foto_url}" alt="${item.nome}" class="card-servico-img">
+          <p>${item.descricao_curta}</p>
+          <span class="price-tag">${item.preco}</span>
+        </div>
+      `).join('');
+    }
+  } catch (err) {
+    console.error("Erro ao carregar serviços:", err);
+  }
+}
+
+function abrirModalServico(index) {
+  const item = listaServicosGlobal[index];
+  if (!item) return;
+
+  document.getElementById('modalNome').innerText = item.nome;
+  document.getElementById('modalFoto').src = item.foto_url;
+  document.getElementById('modalPreco').innerText = item.preco;
+  document.getElementById('modalDescricaoLonga').innerText = item.descricao_longa || item.descricao_curta;
+  
+  // Pré-seleciona o serviço no formulário de agendamento se o campo existir
+  const selectServico = document.getElementById('servico');
+  if (selectServico) selectServico.value = item.nome;
+
+  document.getElementById('modalServico').style.display = 'flex';
+}
+
+function fecharModalServico(e, forcar = false) {
+  if (forcar || e.target.id === 'modalServico') {
+    document.getElementById('modalServico').style.display = 'none';
+  }
+}
+
+// Atualize seu DOMContentLoaded para rodar a função
+document.addEventListener("DOMContentLoaded", () => {
+  carregarBanners();
+  carregarServicos();
+});
+
 function previewFoto(event) {
   const file = event.target.files[0];
   if (file) {
