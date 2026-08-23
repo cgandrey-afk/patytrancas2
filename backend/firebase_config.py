@@ -44,13 +44,21 @@ def salvar_agendamento(nome, telefone, servico, data_agend, horario):
     return True
     
 def carregar_servicos():
-    docs = db.collection("servicos").stream()
-    lista = []
-    for doc in docs:
-        d = doc.to_dict()
-        d["id"] = doc.id
-        lista.append(d)
-    return lista
+    try:
+        docs = db.collection("servicos").stream()
+        servicos = []
+        for doc in docs:
+            dados = doc.to_dict()
+            # Garante que o nome seja pego do campo 'nome' ou, se não existir, usa o ID do documento ("Box Braids")
+            if "nome" not in dados or not dados["nome"]:
+                dados["nome"] = doc.id
+            
+            dados["id"] = doc.id
+            servicos.append(dados)
+        return servicos
+    except Exception as e:
+        print(f"Erro ao carregar serviços: {e}")
+        return []
     
 def buscar_banners():
     doc_ref = db.collection("configuracoes").document("banners")
