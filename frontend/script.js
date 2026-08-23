@@ -24,8 +24,21 @@ async function carregarLogo() {
       const data = await res.json();
       if (data && data.ativo !== false && data.logo_url) {
         const container = document.getElementById('brandLogoContainer');
+        const textSpan = document.getElementById('brandLogoText');
+        
         if (container) {
-          container.innerHTML = `<img src="${data.logo_url}" alt="Paty Tranças" class="brand-logo-img">`;
+          // Oculta o texto padrão
+          if (textSpan) textSpan.style.display = 'none';
+          
+          // Adiciona/Atualiza a imagem da logo
+          let imgElement = container.querySelector('.brand-logo-img');
+          if (!imgElement) {
+            imgElement = document.createElement('img');
+            imgElement.className = 'brand-logo-img';
+            imgElement.alt = 'Paty Tranças';
+            container.appendChild(imgElement);
+          }
+          imgElement.src = data.logo_url;
         }
       }
     }
