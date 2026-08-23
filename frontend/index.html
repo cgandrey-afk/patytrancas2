@@ -164,7 +164,25 @@
       <p><small>&copy; 2026 Todos os direitos reservados.</small></p>
     </div>
   </footer>
-
+<!-- Modal de Localização / Como Chegar -->
+  <div id="modalLocalizacao" class="modal-overlay" onclick="fecharModalLocalizacao(event)">
+    <div class="modal-card" style="text-align: center;">
+      <button class="btn-close" onclick="fecharModalLocalizacao(null, true)">&times;</button>
+      <h2 style="margin-bottom: 15px;">📍 Nosso Endereço</h2>
+      <p id="textoEnderecoExibicao" style="color: var(--text-muted); margin-bottom: 25px; font-size: 1.05rem;">
+        Carregando endereço...
+      </p>
+      
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <a id="linkGoogleMaps" href="#" target="_blank" class="btn-primary" style="background-color: #4285F4;">
+          🗺️ Abrir no Google Maps
+        </a>
+        <a id="linkUber" href="#" target="_blank" class="btn-secondary">
+          🚗 Chamar Uber
+        </a>
+      </div>
+    </div>
+  </div>
 	<!-- Container dos Botões Flutuantes (WhatsApp, Instagram e Localização) -->
 	<div class="social-float-container">
 	  <!-- Botão WhatsApp -->

@@ -282,6 +282,7 @@ function resetarTemporizadorInatividade() {
 // Fallbacks padrão caso o banco de dados não responda
 let telefoneWhatsAppGlobal = '5519995296119';
 let instagramUrlGlobal = 'https://www.instagram.com/patydastrancas/';
+let enderecoGlobal = 'Campinas, SP';
 
 async function carregarContato() {
   try {
@@ -290,18 +291,18 @@ async function carregarContato() {
       const data = await res.json();
       if (data) {
         if (data.whatsapp) {
-          // Remove qualquer caractere que não seja número
           telefoneWhatsAppGlobal = data.whatsapp.replace(/\D/g, '');
         }
         if (data.instagram_url) {
           instagramUrlGlobal = data.instagram_url;
         }
-
-        // Atualiza textos visíveis de telefone na tela (caso existam)
-        const elementosTelefone = document.querySelectorAll('.texto-telefone-whatsapp');
-        elementosTelefone.forEach(el => {
-          el.innerText = data.telefone_formatado || data.whatsapp;
-        });
+        if (data.endereco) {
+          enderecoGlobal = data.endereco;
+          const txtEndereco = document.getElementById('textoEnderecoExibicao');
+          if (txtEndereco) {
+            txtEndereco.innerText = enderecoGlobal;
+          }
+        }
       }
     }
   } catch (err) {
@@ -319,6 +320,17 @@ async function carregarContato() {
     if (btnInstagram) {
       btnInstagram.href = instagramUrlGlobal;
     }
+
+    // Configura os links de rotas (Google Maps e Uber)
+    if (enderecoGlobal) {
+      const enderecoEncoded = encodeURIComponent(enderecoGlobal);
+      
+      const linkMaps = document.getElementById('linkGoogleMaps');
+      if (linkMaps) linkMaps.href = `https://www.google.com/maps/search/?api=1&query=${enderecoEncoded}`;
+
+      const linkUber = document.getElementById('linkUber');
+      if (linkUber) linkUber.href = `https://m.uber.com/ul/?action=setPickup&dropoff[formatted_address]=${enderecoEncoded}`;
+    }
   }
 }
 
@@ -333,31 +345,6 @@ function enviarAgendamentoWhatsApp(dados) {
   );
 
   window.open(`https://wa.me/${telefoneWhatsAppGlobal}?text=${mensagem}`, '_blank');
-}
-
-// Variável global para armazenar o endereço vindo da API
-let enderecoGlobal = 'Campinas, SP'; // Fallback padrão caso o banco demore
-
-// Na sua função carregarContato(), adicione a leitura do endereço:
-// (Certifique-se de que a API /api/contato retorna o campo "endereco")
-if (data.endereco) {
-  enderecoGlobal = data.endereco;
-  
-  const txtEndereco = document.getElementById('textoEnderecoExibicao');
-  if (txtEndereco) {
-    txtEndereco.innerText = enderecoGlobal;
-  }
-}
-
-// Configuração dos links de rotas no finally da função carregarContato:
-if (enderecoGlobal) {
-  const enderecoEncoded = encodeURIComponent(enderecoGlobal);
-  
-  const linkMaps = document.getElementById('linkGoogleMaps');
-  if (linkMaps) linkMaps.href = `https://www.google.com/maps/search/?api=1&query=${enderecoEncoded}`;
-
-  const linkUber = document.getElementById('linkUber');
-  if (linkUber) linkUber.href = `https://m.uber.com/ul/?action=setPickup&dropoff[formatted_address]=${enderecoEncoded}`;
 }
 
 // Funções do Modal de Localização
