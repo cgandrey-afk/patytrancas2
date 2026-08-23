@@ -30,18 +30,17 @@
     </div>
   </header>
 
-  <!-- Hero Section -->
+  <!-- Hero Section com Banners Responsivos -->
   <section id="home" class="hero">
     <div class="hero-container">
-      <div class="hero-content">
-        <span class="badge-tag">Atendimento Exclusivo</span>
-        <h1>Realce sua beleza com tranças autênticas e marcantes</h1>
-        <p>Especialista em tranças nagô, box braids e penteados afro. Cuidado, precisão e elegância para o seu estilo único.</p>
-        <div class="hero-btns">
-          <a href="#agendar" class="btn-primary">🗓️ Reservar Meu Horário</a>
-          <a href="#ia" class="btn-secondary">✨ Testar Foto com IA</a>
-        </div>
-      </div>
+      <a href="#agendar" class="banner-link">
+        <picture>
+          <!-- Banner para telas menores (Celular) -->
+          <source media="(max-width: 768px)" srcset="banner-mobile.jpg">
+          <!-- Banner padrão para telas maiores (PC/Notebook) -->
+          <img src="banner-desktop.jpg" alt="Paty Tranças - Atendimento Exclusivo" class="hero-banner-img">
+        </picture>
+      </a>
     </div>
   </section>
 

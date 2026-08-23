@@ -107,48 +107,40 @@ h1, h2, h3 {
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-/* Hero Section */
+/* Hero Section (Área dos Banners Responsivos) */
 .hero {
-  padding: 140px 20px 80px 20px;
-  background: linear-gradient(135deg, #fdf8f8 0%, #f4eaeb 100%);
+  padding-top: 85px;
+  padding-bottom: 20px;
+  background: var(--bg-main);
   text-align: center;
+  width: 100%;
 }
 
 .hero-container {
-  max-width: 800px;
+  max-width: 1100px;
   margin: 0 auto;
+  padding: 0 20px;
 }
 
-.badge-tag {
-  display: inline-block;
-  background-color: #f7e1e6;
-  color: var(--primary);
-  padding: 5px 15px;
-  border-radius: 15px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-bottom: 15px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+.banner-link {
+  display: block;
+  text-decoration: none;
+  overflow: hidden;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease;
 }
 
-.hero h1 {
-  font-size: 2.8rem;
-  line-height: 1.2;
-  margin-bottom: 20px;
-  color: #2c2224;
+.banner-link:hover {
+  transform: scale(1.005);
 }
 
-.hero p {
-  font-size: 1.1rem;
-  color: var(--text-muted);
-  margin-bottom: 30px;
-}
-
-.hero-btns {
-  display: flex;
-  gap: 15px;
-  justify-content: center;
+.hero-banner-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 16px;
+  object-fit: cover;
 }
 
 /* Containers das Seções */
@@ -364,12 +356,20 @@ footer {
 }
 
 /* =============================================================
-   RESPONSIVIDADE PARA CELULAR (SUBSTITUI O BLOCO ANTERIOR)
+   RESPONSIVIDADE PARA CELULAR
    ============================================================= */
 @media (max-width: 768px) {
-  .hero h1 { font-size: 2rem; }
-  .form-row { grid-template-columns: 1fr; }
-  .hero-btns { flex-direction: column; }
+  .hero {
+    padding-top: 75px;
+  }
+
+  .hero-container {
+    padding: 0 10px;
+  }
+
+  .form-row { 
+    grid-template-columns: 1fr; 
+  }
 
   /* Esconde o botão 'Agendar Horário' no topo no celular */
   .btn-nav-cta {
@@ -381,7 +381,7 @@ footer {
     display: block;
   }
 
-  /* Caixa Flutuante Branca do Menu Mobile (Igual ao Print) */
+  /* Caixa Flutuante Branca do Menu Mobile */
   .nav-menu {
     display: none;
     position: absolute;
