@@ -23,6 +23,7 @@ app.add_middleware(
 # MODELOS DE DADOS (Pydantic)
 # -------------------------------------------------------------
 class AgendamentoRequest(BaseModel):
+    user_id: str
     cliente_nome: str
     cliente_telefone: str
     servico: str
@@ -30,6 +31,7 @@ class AgendamentoRequest(BaseModel):
     horario: str
 
 class StatusUpdateRequest(BaseModel):
+    user_id: str
     doc_id: str
     novo_status: str
 
@@ -53,10 +55,10 @@ def obter_banners():
         return banners
     raise HTTPException(status_code=404, detail="Configuração de banners não encontrada.")
 
-# --- AGENDAMENTOS ---
-@app.get("/api/agendamentos")
-def listar_agendamentos():
-    return fb.carregar_agendamentos()
+# --- AGENDAMENTOS (Agora por Usuário) ---
+@app.get("/api/agendamentos/{user_id}")
+def listar_agendamentos(user_id: str):
+    return fb.carregar_agendamentos(user_id)
     
 @app.get("/api/servicos")
 def listar_servicos():
@@ -65,6 +67,7 @@ def listar_servicos():
 @app.post("/api/agendamentos")
 def criar_agendamento(req: AgendamentoRequest):
     sucesso = fb.salvar_agendamento(
+        req.user_id, 
         req.cliente_nome, 
         req.cliente_telefone, 
         req.servico, 
@@ -82,7 +85,7 @@ def obter_logo():
     logo = fb.buscar_logo()
     if logo:
         return logo
-    raise HTTPException(status_code=404, detail="Logo não encontrada.")   
+    raise HTTPException(status_code=404, detail="Logo não encontrada.")    
 
 
 @app.get("/api/contato")
@@ -97,12 +100,12 @@ def obter_contato():
 
 @app.put("/api/agendamentos/status")
 def atualizar_status(req: StatusUpdateRequest):
-    fb.atualizar_status_agendamento(req.doc_id, req.novo_status)
+    fb.atualizar_status_agendamento(req.user_id, req.doc_id, req.novo_status)
     return {"mensagem": "Status atualizado!"}
 
-@app.delete("/api/agendamentos/{doc_id}")
-def deletar_agendamento(doc_id: str):
-    fb.deletar_agendamento(doc_id)
+@app.delete("/api/agendamentos/{user_id}/{doc_id}")
+def deletar_agendamento(user_id: str, doc_id: str):
+    fb.deletar_agendamento(user_id, doc_id)
     return {"mensagem": "Agendamento excluído!"}
 
 # --- AGENDA DE HORÁRIOS ---

@@ -1,5 +1,22 @@
 const API_URL = "https://patytrancas2.onrender.com";
 
+// Obtém ou cria um ID de usuário único e permanente para este navegador/aparelho
+function obterUserIdUnico() {
+  let userId = localStorage.getItem('paty_trancas_user_id');
+  if (!userId) {
+    // Gera um UUID v4 simples via JavaScript
+    userId = 'user_' + 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+    localStorage.setItem('paty_trancas_user_id', userId);
+  }
+  return userId;
+}
+
+const MEU_USER_ID = obterUserIdUnico();
+
+
 // Alterna a exibição do menu estilo pílula no celular
 function toggleMenuMobile() {
   const menu = document.getElementById('navMenu');
@@ -195,6 +212,7 @@ async function agendar(e) {
   statusDiv.innerHTML = "Salvando agendamento...";
 
   const payload = {
+    user_id: MEU_USER_ID, // <-- Envia o ID único do dispositivo
     cliente_nome: document.getElementById('nome').value,
     cliente_telefone: document.getElementById('telefone').value,
     servico: document.getElementById('servico').value,
@@ -212,7 +230,7 @@ async function agendar(e) {
     if (res.ok) {
       statusDiv.innerHTML = "<p style='color:#22c55e;'>✅ Agendamento realizado com sucesso!</p>";
       document.getElementById('formAgendamento').reset();
-      carregarAgendamentos(); // Atualiza a lista na tela imediatamente após agendar
+      carregarAgendamentos(); 
     } else {
       statusDiv.innerHTML = "<p style='color:#ef4444;'>❌ Não foi possível realizar o agendamento.</p>";
     }
@@ -228,7 +246,8 @@ async function carregarAgendamentos() {
   container.innerHTML = "Buscando agendamentos...";
 
   try {
-    const res = await fetch(`${API_URL}/api/agendamentos`);
+    // Busca os agendamentos passando o ID específico deste usuário na URL
+    const res = await fetch(`${API_URL}/api/agendamentos/${MEU_USER_ID}`);
     const agendamentos = await res.json();
 
     if (res.ok && Array.isArray(agendamentos) && agendamentos.length > 0) {
@@ -245,7 +264,7 @@ async function carregarAgendamentos() {
         </div>
       `).join('');
     } else {
-      container.innerHTML = "<p style='color:var(--text-muted);'>Nenhum agendamento encontrado no momento.</p>";
+      container.innerHTML = "<p style='color:var(--text-muted);'>Nenhum agendamento encontrado para este aparelho.</p>";
     }
   } catch (err) {
     container.innerHTML = "<p style='color:#ef4444;'>Erro ao carregar os agendamentos.</p>";
@@ -279,10 +298,10 @@ function resetarTemporizadorInatividade() {
   window.addEventListener(evento, resetarTemporizadorInatividade, { passive: true });
 });
 
-// Variáveis Globais de Contato (Declaradas apenas uma vez)
-let telefoneWhatsAppGlobal = '5519995296119';
-let instagramUrlGlobal = 'https://www.instagram.com/patydastrancas/';
-let enderecoGlobal = 'Campinas, SP';
+// Variáveis Globais de Contato (Iniciadas vazias, sem fallbacks estáticos)
+let telefoneWhatsAppGlobal = '';
+let instagramUrlGlobal = '';
+let enderecoGlobal = '';
 
 async function carregarContato() {
   console.log("🔍 [DEBUG] Iniciando o carregamento de contato...");
@@ -318,38 +337,52 @@ async function carregarContato() {
       console.warn("⚠️ [DEBUG] O servidor respondeu, mas com erro HTTP:", res.status);
     }
   } catch (err) {
-    console.error("❌ [DEBUG] Erro crítico ao tentar buscar contato (Falha na requisição / CORS / Servidor desligado):", err);
+    console.error("❌ [DEBUG] Erro crítico ao tentar buscar contato:", err);
   } finally {
-    console.log("🔍 [DEBUG] Aplicando valores finais aos botões...");
-    console.log("   - WhatsApp:", telefoneWhatsAppGlobal);
-    console.log("   - Instagram:", instagramUrlGlobal);
-    console.log("   - Endereço:", enderecoGlobal);
+    console.log("🔍 [DEBUG] Aplicando valores do banco aos botões...");
+    console.log("   - WhatsApp:", telefoneWhatsAppGlobal || "Não definido");
+    console.log("   - Instagram:", instagramUrlGlobal || "Não definido");
+    console.log("   - Endereço:", enderecoGlobal || "Não definido");
 
-    // Atualiza o botão flutuante do WhatsApp
+    // Atualiza o botão flutuante do WhatsApp apenas se houver número cadastrado
     const btnWhatsapp = document.getElementById('btnWhatsappFlutuante');
     if (btnWhatsapp) {
-      const mensagemPadrao = encodeURIComponent("Olá, Paty! Gostaria de tirar uma dúvida.");
-      btnWhatsapp.href = `https://wa.me/${telefoneWhatsAppGlobal}?text=${mensagemPadrao}`;
+      if (telefoneWhatsAppGlobal) {
+        const mensagemPadrao = encodeURIComponent("Olá, Paty! Gostaria de tirar uma dúvida.");
+        btnWhatsapp.href = `https://wa.me/${telefoneWhatsAppGlobal}?text=${mensagemPadrao}`;
+        btnWhatsapp.style.display = 'flex'; // Garante que aparece
+      } else {
+        btnWhatsapp.style.display = 'none'; // Esconde se não houver dados
+      }
     }
 
-    // Atualiza o botão flutuante do Instagram
+    // Atualiza o botão flutuante do Instagram apenas se houver URL cadastrada
     const btnInstagram = document.getElementById('btnInstagramFlutuante');
     if (btnInstagram) {
-      btnInstagram.href = instagramUrlGlobal;
+      if (instagramUrlGlobal) {
+        btnInstagram.href = instagramUrlGlobal;
+        btnInstagram.style.display = 'flex';
+      } else {
+        btnInstagram.style.display = 'none';
+      }
     }
 
-    // Configura os links de rotas (Google Maps e Uber)
+    // Configura os links de rotas (Google Maps e Uber) apenas se houver endereço
+    const linkMaps = document.getElementById('linkGoogleMaps');
+    const linkUber = document.getElementById('linkUber');
+
     if (enderecoGlobal) {
       const enderecoEncoded = encodeURIComponent(enderecoGlobal);
-      
-      const linkMaps = document.getElementById('linkGoogleMaps');
       if (linkMaps) linkMaps.href = `https://www.google.com/maps/search/?api=1&query=${enderecoEncoded}`;
-
-      const linkUber = document.getElementById('linkUber');
       if (linkUber) linkUber.href = `https://m.uber.com/ul/?action=setPickup&dropoff[formatted_address]=${enderecoEncoded}`;
+    } else {
+      if (linkMaps) linkMaps.removeAttribute('href');
+      if (linkUber) linkUber.removeAttribute('href');
     }
   }
 }
+
+
 
 // Função de envio do agendamento montando a URL com o número vindo do Firestore
 function enviarAgendamentoWhatsApp(dados) {

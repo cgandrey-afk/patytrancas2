@@ -21,27 +21,37 @@ if not firebase_admin._apps:
 
 db = firestore.client()
 
-def carregar_agendamentos():
-    docs = db.collection("agendamentos").stream()
-    lista = []
-    for doc in docs:
-        d = doc.to_dict()
-        d["id"] = doc.id
-        lista.append(d)
-    return lista
+def carregar_agendamentos(user_id: str):
+    try:
+        # Busca agendamentos apenas dentro da subcoleção do usuário específico
+        docs = db.collection("usuarios").document(user_id).collection("agendamentos").stream()
+        lista = []
+        for doc in docs:
+            d = doc.to_dict()
+            d["id"] = doc.id
+            lista.append(d)
+        return lista
+    except Exception as e:
+        print(f"Erro ao carregar agendamentos do usuário: {e}")
+        return []
 
-def salvar_agendamento(nome, telefone, servico, data_agend, horario):
-    novo_registro = {
-        "cliente_nome": nome,
-        "cliente_telefone": telefone,
-        "servico": servico,
-        "data_agendamento": str(data_agend),
-        "horario": horario,
-        "status": "Pendente",
-        "criado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
-    }
-    db.collection("agendamentos").add(novo_registro)
-    return True
+def salvar_agendamento(user_id, nome, telefone, servico, data_agend, horario):
+    try:
+        novo_registro = {
+            "cliente_nome": nome,
+            "cliente_telefone": telefone,
+            "servico": servico,
+            "data_agendamento": str(data_agend),
+            "horario": horario,
+            "status": "Pendente",
+            "criado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
+        }
+        # Salva na estrutura: usuarios > {user_id} > agendamentos > {id_automatico}
+        db.collection("usuarios").document(user_id).collection("agendamentos").add(novo_registro)
+        return True
+    except Exception as e:
+        print(f"Erro ao salvar agendamento: {e}")
+        return False
     
 def buscar_logo():
     try:
