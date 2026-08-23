@@ -252,6 +252,33 @@ async function carregarAgendamentos() {
   }
 }
 
+// =============================================================
+// EFEITO DE OCULTAR BOTÕES SOCIAIS POR INATIVIDADE (IDLE)
+// =============================================================
+let tempoInatividade;
+const TEMPO_PARA_ESCONDER = 3500; // Tempo em milissegundos (3.5 segundos)
+
+function resetarTemporizadorInatividade() {
+  const container = document.querySelector('.social-float-container');
+  if (!container) return;
+
+  // Mostra os botões novamente
+  container.classList.remove('hidden-idle');
+
+  // Reinicia a contagem
+  clearTimeout(tempoInatividade);
+
+  // Agenda para esconder após o tempo definido de inatividade
+  tempoInatividade = setTimeout(() => {
+    container.classList.add('hidden-idle');
+  }, TEMPO_PARA_ESCONDER);
+}
+
+// Eventos que detectam qualquer movimento ou ação do usuário
+['mousemove', 'mousedown', 'touchstart', 'scroll', 'keydown'].forEach(evento => {
+  window.addEventListener(evento, resetarTemporizadorInatividade, { passive: true });
+});
+
 // Fallbacks padrão caso o banco de dados não responda
 let telefoneWhatsAppGlobal = '5519995296119';
 let instagramUrlGlobal = 'https://www.instagram.com/patydastrancas/';
@@ -308,8 +335,9 @@ function enviarAgendamentoWhatsApp(dados) {
   window.open(`https://wa.me/${telefoneWhatsAppGlobal}?text=${mensagem}`, '_blank');
 }
 
-// Inicialização única ao carregar o documento
+// INICIALIZAÇÃO ÚNICA AO CARREGAR O DOCUMENTO
 document.addEventListener("DOMContentLoaded", () => {
+  resetarTemporizadorInatividade();
   carregarLogo();
   carregarBanners();
   carregarServicos();

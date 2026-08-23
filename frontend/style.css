@@ -439,6 +439,8 @@ footer {
   flex-direction: column;
   gap: 12px;
   z-index: 1000;
+  /* Transição suave para deslizar de volta */
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s ease;
 }
 
 .social-float {
@@ -469,6 +471,19 @@ footer {
 
 .social-float i {
   color: #ffffff !important;
+}
+
+/* Estado Recuado / Oculto por Inatividade */
+.social-float-container.hidden-idle {
+  /* Desliza o container 58px para a direita (deixa ~22px visíveis na borda) */
+  transform: translateX(58px);
+  opacity: 0.85;
+}
+
+/* Revela o botão ao passar o mouse diretamente na pontinha que sobrou */
+.social-float-container.hidden-idle:hover {
+  transform: translateX(0);
+  opacity: 1;
 }
 
 /* Responsividade Mobile */
