@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Paty Tranças - Agendamento & Análise IA</title>
+  <title>Paty Tranças | Agendamento & IA</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
   <div class="app-layout">
     <!-- Sidebar / Menu Lateral -->
     <aside class="sidebar">
@@ -15,66 +16,69 @@
         <p>Atendimento & Estilo</p>
       </div>
       <nav class="menu">
-        <button class="menu-btn active" onclick="trocarAba('aba-agendamento', this)">📅 Novo Agendamento</button>
+        <button class="menu-btn active" onclick="trocarAba('aba-agendar', this)">🗓️ Novo Agendamento</button>
         <button class="menu-btn" onclick="trocarAba('aba-ia', this)">✨ Análise de Foto (IA)</button>
         <button class="menu-btn" onclick="trocarAba('aba-meus-agendamentos', this)">📋 Meus Agendamentos</button>
       </nav>
     </aside>
 
-    <!-- Conteúdo Principal -->
+    <!-- Área de Conteúdo Principal -->
     <main class="content">
-      <!-- ABA 1: AGENDAMENTO -->
-      <section id="aba-agendamento" class="aba-panel active">
+
+      <!-- ABA 1: FORMULÁRIO DE AGENDAMENTO -->
+      <section id="aba-agendar" class="aba-panel active">
         <h1>Agendar Horário</h1>
         <p class="subtitle">Preencha os dados abaixo para reservar seu atendimento.</p>
-        
-        <form id="formAgendamento" class="card" onsubmit="agendar(event)">
-          <div class="form-group">
-            <label for="nome">Nome Completo</label>
-            <input type="text" id="nome" placeholder="Ex: Maria Silva" required>
-          </div>
 
-          <div class="form-group">
-            <label for="telefone">WhatsApp / Telefone</label>
-            <input type="tel" id="telefone" placeholder="Ex: (19) 99999-9999" required>
-          </div>
-
-          <div class="form-group">
-            <label for="servico">Modelo / Serviço</label>
-            <select id="servico" required>
-              <option value="">Selecione o serviço...</option>
-              <option value="Nagô Tradicional">Nagô Tradicional</option>
-              <option value="Box Braids">Box Braids</option>
-              <option value="Goddess Braids">Goddess Braids</option>
-              <option value="Twist / Fulani">Twist / Fulani</option>
-              <option value="Outro Modelo">Outro Modelo</option>
-            </select>
-          </div>
-
-          <div class="form-row">
+        <div class="card">
+          <form id="formAgendamento" onsubmit="agendar(event)">
             <div class="form-group">
-              <label for="data">Data</label>
-              <input type="date" id="data" required>
+              <label for="nome">Nome Completo</label>
+              <input type="text" id="nome" placeholder="Ex: Maria Silva" required>
             </div>
-            <div class="form-group">
-              <label for="horario">Horário</label>
-              <input type="time" id="horario" required>
-            </div>
-          </div>
 
-          <button type="submit" class="btn-primary">Confirmar Agendamento</button>
-        </form>
-        <div id="mensagemStatus" class="status-msg"></div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="telefone">WhatsApp / Telefone</label>
+                <input type="tel" id="telefone" placeholder="Ex: (19) 99999-9999" required>
+              </div>
+              <div class="form-group">
+                <label for="servico">Modelo / Serviço</label>
+                <select id="servico" required>
+                  <option value="">Selecione o serviço...</option>
+                  <option value="Box Braids">Box Braids</option>
+                  <option value="Nagô Desenhada">Nagô Desenhada</option>
+                  <option value="Goddess Braids">Goddess Braids</option>
+                  <option value="Fulani Braids">Fulani Braids</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="data">Data</label>
+                <input type="date" id="data" required>
+              </div>
+              <div class="form-group">
+                <label for="horario">Horário</label>
+                <input type="time" id="horario" required>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary">Confirmar Agendamento</button>
+          </form>
+          <div id="mensagemStatus" class="status-msg"></div>
+        </div>
       </section>
 
-      <!-- ABA 2: ANÁLISE POR IA -->
+      <!-- ABA 2: ANÁLISE DE FOTO COM IA -->
       <section id="aba-ia" class="aba-panel">
         <h1>Análise de Penteado por Foto</h1>
         <p class="subtitle">Envie uma foto do modelo de trança para a IA estimar tempo e complexidade.</p>
 
         <div class="card">
           <div class="form-group">
-            <label for="fotoInput">Selecione uma imagem do seu computador/celular</label>
+            <label for="fotoInput">Selecione uma imagem do seu computador/celular:</label>
             <input type="file" id="fotoInput" accept="image/*" onchange="previewFoto(event)">
           </div>
 
@@ -82,25 +86,30 @@
             <img id="imgPreview" src="" alt="Pré-visualização">
           </div>
 
-          <button onclick="analisarFoto()" class="btn-primary">Analisar com IA</button>
-        </div>
+          <button class="btn-primary" onclick="analisarFoto()">Analisar com IA</button>
 
-        <div id="resultadoIA" class="card resultado-ia" style="display: none;"></div>
+          <div id="resultadoIA" class="card resultado-ia" style="display: none; margin-top: 20px;"></div>
+        </div>
       </section>
 
-      <!-- ABA 3: CONSULTAR AGENDAMENTOS -->
+      <!-- ABA 3: LISTA DE AGENDAMENTOS -->
       <section id="aba-meus-agendamentos" class="aba-panel">
         <div class="header-flex">
-          <h1>Agendamentos Salvos</h1>
-          <button onclick="carregarAgendamentos()" class="btn-secondary">🔄 Atualizar</button>
+          <div>
+            <h1>Agendamentos Salvos</h1>
+            <p class="subtitle">Consulte os horários marcados no sistema.</p>
+          </div>
+          <button class="btn-secondary" onclick="carregarAgendamentos()">🔄 Atualizar</button>
         </div>
+
         <div id="listaAgendamentos" class="agendamentos-grid">
-          <p>Carregando agendamentos...</p>
+          <p style="color: var(--text-muted);">Carregando agendamentos...</p>
         </div>
       </section>
+
     </main>
   </div>
 
-  <script src="app.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
