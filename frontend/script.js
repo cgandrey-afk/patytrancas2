@@ -124,7 +124,7 @@ function abrirModalServico(index) {
     ${item.descricao_longa || item.descricao_curta}<br><br>
     <strong>⏱️ Tempo de Execução:</strong> ${item.tempo_fazer || 'Sob consulta'}<br>
     <strong>⏳ Durabilidade no Cabelo:</strong> ${item.durabilidade || 'Sob consulta'}<br><br>
-	<small style="color: var(--text-muted); display: block; line-height: 1.3;">
+    <small style="color: var(--text-muted); display: block; line-height: 1.3;">
       ⚠️ <strong>Aviso:</strong> A durabilidade informada é uma estimativa. A conservação do penteado depende diretamente dos cuidados diários (uso de touca de cetim, manutenção do couro cabeludo seco e higienização adequada).
     </small>
   `;
@@ -252,8 +252,7 @@ async function carregarAgendamentos() {
   }
 }
 
-
-let telefoneWhatsAppGlobal = '5519995296119'; // Valor padrão de fallback
+let telefoneWhatsAppGlobal = '5519995296119'; // Fallback padrão
 
 async function carregarContato() {
   try {
@@ -273,6 +272,13 @@ async function carregarContato() {
     }
   } catch (err) {
     console.error("Erro ao carregar dados de contato:", err);
+  } finally {
+    // Atualiza o link do botão flutuante com o número obtido ou o fallback
+    const btnFlutuante = document.getElementById('btnWhatsappFlutuante');
+    if (btnFlutuante) {
+      const mensagemPadrao = encodeURIComponent("Olá, Paty! Gostaria de tirar uma dúvida.");
+      btnFlutuante.href = `https://wa.me/${telefoneWhatsAppGlobal}?text=${mensagemPadrao}`;
+    }
   }
 }
 
@@ -295,4 +301,5 @@ document.addEventListener("DOMContentLoaded", () => {
   carregarBanners();
   carregarServicos();
   carregarAgendamentos();
+  carregarContato();
 });
