@@ -123,7 +123,10 @@ function abrirModalServico(index) {
   document.getElementById('modalDescricaoLonga').innerHTML = `
     ${item.descricao_longa || item.descricao_curta}<br><br>
     <strong>⏱️ Tempo de Execução:</strong> ${item.tempo_fazer || 'Sob consulta'}<br>
-    <strong>⏳ Durabilidade no Cabelo:</strong> ${item.durabilidade || 'Sob consulta'}
+    <strong>⏳ Durabilidade no Cabelo:</strong> ${item.durabilidade || 'Sob consulta'}<br><br>
+	<small style="color: var(--text-muted); display: block; line-height: 1.3;">
+      ⚠️ <strong>Aviso:</strong> A durabilidade informada é uma estimativa. A conservação do penteado depende diretamente dos cuidados diários (uso de touca de cetim, manutenção do couro cabeludo seco e higienização adequada).
+    </small>
   `;
   
   // Seleciona automaticamente esse serviço no formulário
