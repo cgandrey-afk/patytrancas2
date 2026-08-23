@@ -254,7 +254,7 @@ async function carregarAgendamentos() {
 
 // Fallbacks padrão caso o banco de dados não responda
 let telefoneWhatsAppGlobal = '5519995296119';
-let instagramUrlGlobal = 'https://www.instagram.com';
+let instagramUrlGlobal = 'https://www.instagram.com/patydastrancas/';
 
 async function carregarContato() {
   try {
