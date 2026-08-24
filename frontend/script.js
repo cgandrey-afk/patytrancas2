@@ -404,19 +404,13 @@ let enderecoGlobal = '';
 
 async function carregarContato() {
   console.log("🔍 [DEBUG] Iniciando o carregamento de contato...");
-  console.log("🔍 [DEBUG] API_URL configurada:", typeof API_URL !== 'undefined' ? API_URL : "API_URL não definida!");
 
   try {
     const urlCompleta = `${API_URL}/api/contato`;
-    console.log("🔍 [DEBUG] Fazendo fetch para:", urlCompleta);
-
     const res = await fetch(urlCompleta);
-    console.log("🔍 [DEBUG] Resposta recebida. Status:", res.status, res.statusText);
 
     if (res.ok) {
       const data = await res.json();
-      console.log("✅ [DEBUG] Dados de contato obtidos do banco com sucesso:", data);
-
       if (data) {
         if (data.whatsapp) {
           telefoneWhatsAppGlobal = data.whatsapp.replace(/\D/g, '');
@@ -432,30 +426,21 @@ async function carregarContato() {
           }
         }
       }
-    } else {
-      console.warn("⚠️ [DEBUG] O servidor respondeu, mas com erro HTTP:", res.status);
     }
   } catch (err) {
     console.error("❌ [DEBUG] Erro crítico ao tentar buscar contato:", err);
   } finally {
-    console.log("🔍 [DEBUG] Aplicando valores do banco aos botões...");
-    console.log("   - WhatsApp:", telefoneWhatsAppGlobal || "Não definido");
-    console.log("   - Instagram:", instagramUrlGlobal || "Não definido");
-    console.log("   - Endereço:", enderecoGlobal || "Não definido");
-
-    // Atualiza o botão flutuante do WhatsApp apenas se houver número cadastrado
     const btnWhatsapp = document.getElementById('btnWhatsappFlutuante');
     if (btnWhatsapp) {
       if (telefoneWhatsAppGlobal) {
         const mensagemPadrao = encodeURIComponent("Olá, Paty! Gostaria de tirar uma dúvida.");
         btnWhatsapp.href = `https://wa.me/${telefoneWhatsAppGlobal}?text=${mensagemPadrao}`;
-        btnWhatsapp.style.display = 'flex'; // Garante que aparece
+        btnWhatsapp.style.display = 'flex';
       } else {
-        btnWhatsapp.style.display = 'none'; // Esconde se não houver dados
+        btnWhatsapp.style.display = 'none';
       }
     }
 
-    // Atualiza o botão flutuante do Instagram apenas se houver URL cadastrada
     const btnInstagram = document.getElementById('btnInstagramFlutuante');
     if (btnInstagram) {
       if (instagramUrlGlobal) {
@@ -466,7 +451,6 @@ async function carregarContato() {
       }
     }
 
-    // Configura os links de rotas (Google Maps e Uber) apenas se houver endereço
     const linkMaps = document.getElementById('linkGoogleMaps');
     const linkUber = document.getElementById('linkUber');
 
@@ -480,8 +464,6 @@ async function carregarContato() {
     }
   }
 }
-
-
 
 // Função de envio do agendamento montando a URL com o número vindo do Firestore
 function enviarAgendamentoWhatsApp(dados) {
@@ -513,6 +495,22 @@ function fecharModalLocalizacao(e, forcar = false) {
   }
 }
 
+// Inicialização do Calendário Flatpickr
+function inicializarCalendario() {
+  const inputData = document.getElementById('data');
+  if (inputData && typeof flatpickr !== 'undefined') {
+    flatpickr(inputData, {
+      locale: "pt", // Traduz os meses e dias para português
+      dateFormat: "Y-m-d", // Formato ideal para salvar no banco de dados (AAAA-MM-DD)
+      minDate: "today", // Impede a seleção de datas retroativas
+      disable: [
+        // Exemplo: se quiser desativar domingos (0) ou segundas (1), descomente a linha abaixo:
+        // function(date) { return (date.getDay() === 0); }
+      ]
+    });
+  }
+}
+
 // INICIALIZAÇÃO ÚNICA AO CARREGAR O DOCUMENTO
 document.addEventListener("DOMContentLoaded", () => {
   resetarTemporizadorInatividade();
@@ -521,4 +519,5 @@ document.addEventListener("DOMContentLoaded", () => {
   carregarServicos();
   carregarAgendamentos();
   carregarContato(); 
+  inicializarCalendario(); // Ativa o calendário personalizado
 });

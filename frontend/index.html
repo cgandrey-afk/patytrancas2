@@ -8,6 +8,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
   <!-- Biblioteca Font Awesome para ícones -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Flatpickr (Estilos do calendário personalizado) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
 </head>
 <body>
 
@@ -130,7 +134,8 @@
         <div class="form-row">
           <div class="form-group">
             <label for="data">Data de Atendimento</label>
-            <input type="date" id="data" required>
+            <!-- Alterado para type="text" para o Flatpickr gerenciar o calendário personalizado -->
+            <input type="text" id="data" placeholder="Selecione a data..." readonly required style="cursor: pointer;">
           </div>
           <div class="form-group">
             <label for="horario">Horário</label>
@@ -164,7 +169,8 @@
       <p><small>&copy; 2026 Todos os direitos reservados.</small></p>
     </div>
   </footer>
-<!-- Modal de Localização / Como Chegar -->
+
+  <!-- Modal de Localização / Como Chegar -->
   <div id="modalLocalizacao" class="modal-overlay" onclick="fecharModalLocalizacao(event)">
     <div class="modal-card" style="text-align: center;">
       <button class="btn-close" onclick="fecharModalLocalizacao(null, true)">&times;</button>
@@ -183,24 +189,30 @@
       </div>
     </div>
   </div>
-	<!-- Container dos Botões Flutuantes (WhatsApp, Instagram e Localização) -->
-	<div class="social-float-container">
-	  <!-- Botão WhatsApp -->
-	  <a id="btnWhatsappFlutuante" href="#" target="_blank" rel="noopener noreferrer" class="social-float whatsapp-float" title="Fale pelo WhatsApp">
-		<i class="fab fa-whatsapp"></i>
-	  </a>
 
-	  <!-- Botão Instagram -->
-	  <a id="btnInstagramFlutuante" href="#" target="_blank" rel="noopener noreferrer" class="social-float instagram-float" title="Siga no Instagram">
-		<i class="fab fa-instagram"></i>
-	  </a>
+  <!-- Container dos Botões Flutuantes (WhatsApp, Instagram e Localização) -->
+  <div class="social-float-container">
+    <!-- Botão WhatsApp -->
+    <a id="btnWhatsappFlutuante" href="#" target="_blank" rel="noopener noreferrer" class="social-float whatsapp-float" title="Fale pelo WhatsApp">
+      <i class="fab fa-whatsapp"></i>
+    </a>
 
-	  <!-- Botão Localização / Como Chegar -->
-	  <button onclick="abrirModalLocalizacao()" class="social-float location-float" title="Como Chegar">
-		📍
-	  </button>
-	</div>
+    <!-- Botão Instagram -->
+    <a id="btnInstagramFlutuante" href="#" target="_blank" rel="noopener noreferrer" class="social-float instagram-float" title="Siga no Instagram">
+      <i class="fab fa-instagram"></i>
+    </a>
 
+    <!-- Botão Localização / Como Chegar -->
+    <button onclick="abrirModalLocalizacao()" class="social-float location-float" title="Como Chegar">
+      📍
+    </button>
+  </div>
+
+  <!-- Scripts do Flatpickr e Tradução para Português -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://npmcdn.com/flatpickr/dist/l10n/pt.js"></script>
+
+  <!-- Seu script principal -->
   <script src="script.js"></script>
 </body>
 </html>

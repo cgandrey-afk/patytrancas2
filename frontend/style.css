@@ -557,3 +557,30 @@ footer {
     border-bottom: none;
   }
 }
+
+/* ============================================================= */
+/* AJUSTES VISUAIS PARA O CALENDÁRIO FLATPICKR                   */
+/* ============================================================= */
+
+/* Garante que o input de data tenha a mesma cara dos outros inputs do form */
+#data {
+  background-color: var(--bg-card, #1e1e1e);
+  color: var(--text-main, #ffffff);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Personalização leve do tema escuro do Flatpickr para combinar com as cores do site */
+.flatpickr-calendar.dark {
+  background: #1a1a1a !important;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  font-family: 'Poppins', sans-serif !important;
+}
+
+/* Cor de destaque nos dias selecionados (ex: cor primária do seu site) */
+.flatpickr-day.selected, 
+.flatpickr-day.selected:hover {
+  background: var(--primary-color, #c25975) !important;
+  border-color: var(--primary-color, #c25975) !important;
+}
