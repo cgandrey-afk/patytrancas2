@@ -523,12 +523,103 @@ async function inicializarCalendario() {
   }
 }
 
+async function inicializarCalendario() {
+  const inputData = document.getElementById('data');
+  const selectHorarios = document.getElementById('horario');
+  
+  if (!inputData || typeof flatpickr === 'undefined') return;
+
+  try {
+    const resposta = await fetch(`${API_URL}/api/agenda/dias`);
+    let diasPermitidos = [];
+    
+    if (resposta.ok) {
+      diasPermitidos = await resposta.json();
+    }
+
+    flatpickr(inputData, {
+      locale: "pt",
+      dateFormat: "Y-m-d",
+      minDate: "today",
+      enable: diasPermitidos,
+      // Disparado quando o usuário altera ou escolhe uma data
+      onChange: async function(selectedDates, dateStr, instance) {
+        // Se o usuário desmarcou ou limpou a data, limpa os horários
+        if (!dateStr) {
+          limparHorarios();
+          return;
+        }
+        await carregarHorariosDisponiveis(dateStr);
+      }
+    });
+
+  } catch (err) {
+    console.error("Erro ao carregar dias disponíveis:", err);
+  }
+
+  // Trava de segurança: se clicar no campo de horário sem ter data escolhida
+  if (selectHorarios) {
+    selectHorarios.addEventListener('mousedown', function(e) {
+      if (!inputData.value) {
+        e.preventDefault(); // Impede abrir/interagir com o select
+        alert("Por favor, selecione uma data no calendário primeiro!");
+        inputData.focus();
+      }
+    });
+  }
+}
+
+async function inicializarCalendario() {
+  const inputData = document.getElementById('data');
+  const selectHorarios = document.getElementById('horario');
+  
+  if (!inputData || typeof flatpickr === 'undefined') return;
+
+  try {
+    const resposta = await fetch(`${API_URL}/api/agenda/dias`);
+    let diasPermitidos = [];
+    
+    if (resposta.ok) {
+      diasPermitidos = await resposta.json();
+    }
+
+    flatpickr(inputData, {
+      locale: "pt",
+      dateFormat: "Y-m-d",
+      minDate: "today",
+      enable: diasPermitidos,
+      // Disparado quando o usuário altera ou escolhe uma data
+      onChange: async function(selectedDates, dateStr, instance) {
+        // Se o usuário desmarcou ou limpou a data, limpa os horários
+        if (!dateStr) {
+          limparHorarios();
+          return;
+        }
+        await carregarHorariosDisponiveis(dateStr);
+      }
+    });
+
+  } catch (err) {
+    console.error("Erro ao carregar dias disponíveis:", err);
+  }
+
+  // Trava de segurança: se clicar no campo de horário sem ter data escolhida
+  if (selectHorarios) {
+    selectHorarios.addEventListener('mousedown', function(e) {
+      if (!inputData.value) {
+        e.preventDefault(); // Impede abrir/interagir com o select
+        alert("Por favor, selecione uma data no calendário primeiro!");
+        inputData.focus();
+      }
+    });
+  }
+}
+
 // Função para buscar e renderizar os horários do dia selecionado
 async function carregarHorariosDisponiveis(dataStr) {
-  const selectHorarios = document.getElementById('horario'); // Supondo que o ID do seu select/container de horários seja 'horario'
+  const selectHorarios = document.getElementById('horario');
   if (!selectHorarios) return;
 
-  // Limpa as opções atuais e mostra um estado de carregamento
   selectHorarios.innerHTML = '<option value="">Carregando horários...</option>';
 
   try {
@@ -544,7 +635,6 @@ async function carregarHorariosDisponiveis(dataStr) {
       return;
     }
 
-    // Adiciona cada horário disponível no elemento de seleção
     horarios.forEach(horario => {
       const option = document.createElement('option');
       option.value = horario;
@@ -555,6 +645,14 @@ async function carregarHorariosDisponiveis(dataStr) {
   } catch (err) {
     console.error("Erro ao carregar horários:", err);
     selectHorarios.innerHTML = '<option value="">Erro ao carregar horários</option>';
+  }
+}
+
+// Função auxiliar para resetar o select de horários
+function limparHorarios() {
+  const selectHorarios = document.getElementById('horario');
+  if (selectHorarios) {
+    selectHorarios.innerHTML = '<option value="">Selecione uma data primeiro</option>';
   }
 }
 
