@@ -24,6 +24,12 @@ def listar_dias_disponiveis():
     agenda = fb.buscar_agenda_disponivel()
     # Retorna apenas as chaves (datas, ex: ["2026-08-12", "2026-08-13"])
     return list(agenda.keys())
+    
+@app.get("/api/agenda/horarios/{data}")
+def listar_horarios_por_data(data: str):
+    agenda = fb.buscar_agenda_disponivel()
+    # Retorna os horários daquela data específica, ou uma lista vazia se não houver
+    return agenda.get(data, [])
 
 # -------------------------------------------------------------
 # MODELOS DE DADOS (Pydantic)

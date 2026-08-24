@@ -495,13 +495,11 @@ function fecharModalLocalizacao(e, forcar = false) {
   }
 }
 
-// Inicialização do Calendário Flatpickr buscando os dias disponíveis no banco
 async function inicializarCalendario() {
   const inputData = document.getElementById('data');
   if (!inputData || typeof flatpickr === 'undefined') return;
 
   try {
-    // Faz a requisição para a nova rota da API que retorna o array de datas (ex: ["2026-08-12", "2026-08-13"])
     const resposta = await fetch(`${API_URL}/api/agenda/dias`);
     let diasPermitidos = [];
     
@@ -513,23 +511,50 @@ async function inicializarCalendario() {
       locale: "pt",
       dateFormat: "Y-m-d",
       minDate: "today",
-      // Habilita estritamente apenas as datas cadastradas no Firestore
       enable: diasPermitidos,
-      onDayCreate: function(dof, pf, st, dayElem) {
-        // Opcional para estilizações extras de dias habilitados/desabilitados
+      // Disparado quando o usuário escolhe uma data válida no calendário
+      onChange: async function(selectedDates, dateStr, instance) {
+        await carregarHorariosDisponiveis(dateStr);
       }
     });
 
   } catch (err) {
-    console.error("Erro ao carregar dias disponíveis para o calendário:", err);
-    
-    // Fallback caso ocorra falha na conexão: bloqueia tudo para evitar agendamentos inválidos
-    flatpickr(inputData, {
-      locale: "pt",
-      dateFormat: "Y-m-d",
-      minDate: "today",
-      enable: []
+    console.error("Erro ao carregar dias disponíveis:", err);
+  }
+}
+
+// Função para buscar e renderizar os horários do dia selecionado
+async function carregarHorariosDisponiveis(dataStr) {
+  const selectHorarios = document.getElementById('horario'); // Supondo que o ID do seu select/container de horários seja 'horario'
+  if (!selectHorarios) return;
+
+  // Limpa as opções atuais e mostra um estado de carregamento
+  selectHorarios.innerHTML = '<option value="">Carregando horários...</option>';
+
+  try {
+    const resposta = await fetch(`${API_URL}/api/agenda/horarios/${dataStr}`);
+    if (!resposta.ok) throw new Error("Erro ao buscar horários");
+
+    const horarios = await resposta.json();
+
+    selectHorarios.innerHTML = '<option value="">Selecione um horário</option>';
+
+    if (horarios.length === 0) {
+      selectHorarios.innerHTML = '<option value="">Nenhum horário disponível para esta data</option>';
+      return;
+    }
+
+    // Adiciona cada horário disponível no elemento de seleção
+    horarios.forEach(horario => {
+      const option = document.createElement('option');
+      option.value = horario;
+      option.textContent = horario;
+      selectHorarios.appendChild(option);
     });
+
+  } catch (err) {
+    console.error("Erro ao carregar horários:", err);
+    selectHorarios.innerHTML = '<option value="">Erro ao carregar horários</option>';
   }
 }
 
