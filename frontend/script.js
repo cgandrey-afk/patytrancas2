@@ -233,7 +233,7 @@ async function agendar(e) {
       limparHorarios(); 
       carregarAgendamentos(); 
 
-      // Faz a mensagem de sucesso sumir após 5 segundos garantindo a limpeza
+      // Faz a mensagem de sucesso sumir após 5 segundos
       setTimeout(() => {
         const divAtualizada = document.getElementById('mensagemStatus');
         if (divAtualizada) {
