@@ -108,9 +108,10 @@ def buscar_agenda_disponivel():
     docs = db.collection("agenda").stream()
     for doc in docs:
         dados = doc.to_dict()
-        data_str = dados.get("data")
+        # Usa prioritariamente o ID do documento (ex: '2026-08-26') como a data oficial
+        data_str = doc.id or dados.get("data")
         horarios = dados.get("horarios_disponiveis", [])
-        if horarios:
+        if data_str and horarios:
             agenda[data_str] = horarios
     return agenda
 
