@@ -118,7 +118,9 @@ async function carregarServicos() {
 
       // Preenche o campo de seleção do formulário de agendamento
       if (selectServico && listaServicosGlobal.length > 0) {
-        selectServico.innerHTML = listaServicosGlobal.map(item => `
+        selectServico.innerHTML = `
+          <option value="">-- Selecione o modelo --</option>
+        ` + listaServicosGlobal.map(item => `
           <option value="${item.nome}">${item.nome} (${item.preco})</option>
         `).join('');
       }
