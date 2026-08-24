@@ -495,18 +495,38 @@ function fecharModalLocalizacao(e, forcar = false) {
   }
 }
 
-// Inicialização do Calendário Flatpickr
-function inicializarCalendario() {
+// Inicialização do Calendário Flatpickr buscando os dias disponíveis no banco
+async function inicializarCalendario() {
   const inputData = document.getElementById('data');
-  if (inputData && typeof flatpickr !== 'undefined') {
+  if (!inputData || typeof flatpickr === 'undefined') return;
+
+  try {
+    // Faz uma requisição para buscar os dias disponíveis cadastrados na coleção 'agenda'
+    const res = `${API_URL}/api/agenda-disponivel`; // Substitua pela rota exata do seu backend que lista os IDs/datas da agenda
+    // Caso seu backend retorne um array de strings com as datas (ex: ["2026-08-12", "2026-08-13"])
+    
+    const resposta = await fetch(`${API_URL}/api/agenda/dias`); // Ajuste o endpoint conforme sua API
+    const diasPermitidos = await resposta.json(); // Espera-se um array como: ['2026-08-12', '2026-08-13']
+
     flatpickr(inputData, {
-      locale: "pt", // Traduz os meses e dias para português
-      dateFormat: "Y-m-d", // Formato ideal para salvar no banco de dados (AAAA-MM-DD)
-      minDate: "today", // Impede a seleção de datas retroativas
-      disable: [
-        // Exemplo: se quiser desativar domingos (0) ou segundas (1), descomente a linha abaixo:
-        // function(date) { return (date.getDay() === 0); }
-      ]
+      locale: "pt",
+      dateFormat: "Y-m-d",
+      minDate: "today",
+      // Habilita apenas as datas que existem no array retornado pelo banco
+      enable: diasPermitidos, 
+      onDayCreate: function(dof, pf, st, dayElem) {
+        // Opcional: estilização extra para dias habilitados se precisar
+      }
+    });
+
+  } catch (err) {
+    console.error("Erro ao carregar dias disponíveis para o calendário:", err);
+    
+    // Fallback caso a API falhe: inicializa padrão bloqueando apenas o passado
+    flatpickr(inputData, {
+      locale: "pt",
+      dateFormat: "Y-m-d",
+      minDate: "today"
     });
   }
 }
