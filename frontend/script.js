@@ -212,7 +212,7 @@ async function agendar(e) {
   statusDiv.innerHTML = "Salvando agendamento...";
 
   const payload = {
-    user_id: MEU_USER_ID, // <-- Envia o ID único do dispositivo
+    user_id: MEU_USER_ID, 
     cliente_nome: document.getElementById('nome').value,
     cliente_telefone: document.getElementById('telefone').value,
     servico: document.getElementById('servico').value,
@@ -230,7 +230,14 @@ async function agendar(e) {
     if (res.ok) {
       statusDiv.innerHTML = "<p style='color:#22c55e;'>✅ Agendamento realizado com sucesso!</p>";
       document.getElementById('formAgendamento').reset();
+      limparHorarios(); 
       carregarAgendamentos(); 
+
+      // Faz a mensagem de sucesso sumir após 5 segundos
+      setTimeout(() => {
+        statusDiv.innerHTML = "";
+      }, 5000);
+
     } else {
       statusDiv.innerHTML = "<p style='color:#ef4444;'>❌ Não foi possível realizar o agendamento.</p>";
     }
@@ -251,9 +258,9 @@ async function carregarAgendamentos() {
 
     if (res.ok && Array.isArray(agendamentos) && agendamentos.length > 0) {
       container.innerHTML = agendamentos.map(item => {
-        let corStatus = "#eab308"; // Amarelo para Pendente
-        if (item.status === "Aprovado") corStatus = "#22c55e"; // Verde
-        if (item.status === "Cancelado") corStatus = "#ef4444"; // Vermelho
+        let corStatus = "#eab308"; 
+        if (item.status === "Aprovado") corStatus = "#22c55e"; 
+        if (item.status === "Cancelado") corStatus = "#ef4444"; 
 
         return `
           <div class="agendamento-card" style="border-left: 4px solid ${corStatus}; padding: 12px; margin-bottom: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
@@ -261,7 +268,7 @@ async function carregarAgendamentos() {
               <div>
                 <strong>${item.cliente_nome}</strong> (${item.servico})<br>
                 <small style="color:var(--text-muted)">📱 ${item.cliente_telefone}</small><br>
-                <small>Status: <strong style="color: ${corStatus}">${item.status || 'Pendente'}</strong></small>
+                <small>Status: <strong style="color: ${corStatus}">${item.status || 'Pendente, aguardando aprovação'}</strong></small>
                 ${item.pedido_cancelamento ? '<br><small style="color:#ef4444">⚠️ Cancelamento solicitado (Pendente)</small>' : ''}
                 ${item.pedido_reagendamento ? '<br><small style="color:#3b82f6">⚠️ Reagendamento solicitado para ' + item.novo_data + ' às ' + item.novo_horario + ' (Status: ' + (item.status_reag || 'Pendente') + ')</small>' : ''}
               </div>
@@ -271,7 +278,6 @@ async function carregarAgendamentos() {
               </div>
             </div>
 
-            <!-- Botões de Ação Fixos em Cada Card -->
             <div style="margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end;">
               <button onclick='prepararReagendamento("${item.id}", "${item.status}", "${item.cliente_nome}", "${item.cliente_telefone}", "${item.servico}")' style="padding: 6px 12px; background: #3b82f6; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;">
                 🔄 Reagendar
@@ -295,30 +301,24 @@ async function carregarAgendamentos() {
 // EFEITO DE OCULTAR BOTÕES SOCIAIS POR INATIVIDADE (IDLE)
 // =============================================================
 let tempoInatividade;
-const TEMPO_PARA_ESCONDER = 3500; // Tempo em milissegundos (3.5 segundos)
+const TEMPO_PARA_ESCONDER = 3500; 
 
 function resetarTemporizadorInatividade() {
   const container = document.querySelector('.social-float-container');
   if (!container) return;
 
-  // Mostra os botões novamente
   container.classList.remove('hidden-idle');
-
-  // Reinicia a contagem
   clearTimeout(tempoInatividade);
 
-  // Agenda para esconder após o tempo definido de inatividade
   tempoInatividade = setTimeout(() => {
     container.classList.add('hidden-idle');
   }, TEMPO_PARA_ESCONDER);
 }
 
-// Eventos que detectam qualquer movimento ou ação do usuário
 ['mousemove', 'mousedown', 'touchstart', 'scroll', 'keydown'].forEach(evento => {
   window.addEventListener(evento, resetarTemporizadorInatividade, { passive: true });
 });
 
-// Função do Botão Cancelar
 async function executarCancelamento(docId, statusAtual) {
   if (!confirm("Deseja realmente cancelar este agendamento?")) return;
 
@@ -330,7 +330,7 @@ async function executarCancelamento(docId, statusAtual) {
     if (res.ok) {
       const data = await res.json();
       alert(data.mensagem);
-      carregarAgendamentos(); // Atualiza a lista na tela
+      carregarAgendamentos(); 
     } else {
       alert("Erro ao processar o cancelamento.");
     }
@@ -340,25 +340,19 @@ async function executarCancelamento(docId, statusAtual) {
   }
 }
 
-// Função do Botão Reagendar
 function prepararReagendamento(docId, statusAtual, nome, telefone, servico) {
   if (statusAtual === "Pendente") {
-    // Se for Pendente: Injeta nome, telefone e serviço, deixando data e hora em branco
     document.getElementById('nome').value = nome;
     document.getElementById('telefone').value = telefone;
     document.getElementById('servico').value = servico;
     document.getElementById('data').value = "";
-    document.getElementById('horario').value = "";
+    limparHorarios();
 
-    // Opcional: Deleta o agendamento antigo pendente para evitar duplicidade ao reenviar, ou você pode tratá-lo no backend.
     executarCancelamento(docId, "Pendente");
-
-    // Rola a tela suavemente para o formulário de agendamento
     document.getElementById('formAgendamento').scrollIntoView({ behavior: 'smooth' });
     alert("Dados carregados no formulário! Escolha a nova data e horário e clique em agendar.");
 
   } else if (statusAtual === "Aprovado") {
-    // Se for Aprovado: Pede a nova data e horário e envia a solicitação ao banco
     const novaData = prompt("Digite a nova data desejada (AAAA-MM-DD):");
     const novoHorario = prompt("Digite o novo horário desejado (HH:MM):");
 
@@ -397,14 +391,11 @@ async function enviarSolicitacaoReagendamentoAprovado(docId, statusAtual, novaDa
   }
 }
 
-// Variáveis Globais de Contato (Iniciadas vazias, sem fallbacks estáticos)
 let telefoneWhatsAppGlobal = '';
 let instagramUrlGlobal = '';
 let enderecoGlobal = '';
 
 async function carregarContato() {
-  console.log("🔍 [DEBUG] Iniciando o carregamento de contato...");
-
   try {
     const urlCompleta = `${API_URL}/api/contato`;
     const res = await fetch(urlCompleta);
@@ -428,7 +419,7 @@ async function carregarContato() {
       }
     }
   } catch (err) {
-    console.error("❌ [DEBUG] Erro crítico ao tentar buscar contato:", err);
+    console.error("Erro ao buscar contato:", err);
   } finally {
     const btnWhatsapp = document.getElementById('btnWhatsappFlutuante');
     if (btnWhatsapp) {
@@ -465,7 +456,6 @@ async function carregarContato() {
   }
 }
 
-// Função de envio do agendamento montando a URL com o número vindo do Firestore
 function enviarAgendamentoWhatsApp(dados) {
   const mensagem = encodeURIComponent(
     `Olá, Paty! Gostaria de agendar um horário.\n\n` +
@@ -478,7 +468,6 @@ function enviarAgendamentoWhatsApp(dados) {
   window.open(`https://wa.me/${telefoneWhatsAppGlobal}?text=${mensagem}`, '_blank');
 }
 
-// Funções do Modal de Localização
 function abrirModalLocalizacao() {
   const modal = document.getElementById('modalLocalizacao');
   if (modal) {
@@ -495,34 +484,7 @@ function fecharModalLocalizacao(e, forcar = false) {
   }
 }
 
-async function inicializarCalendario() {
-  const inputData = document.getElementById('data');
-  if (!inputData || typeof flatpickr === 'undefined') return;
-
-  try {
-    const resposta = await fetch(`${API_URL}/api/agenda/dias`);
-    let diasPermitidos = [];
-    
-    if (resposta.ok) {
-      diasPermitidos = await resposta.json();
-    }
-
-    flatpickr(inputData, {
-      locale: "pt",
-      dateFormat: "Y-m-d",
-      minDate: "today",
-      enable: diasPermitidos,
-      // Disparado quando o usuário escolhe uma data válida no calendário
-      onChange: async function(selectedDates, dateStr, instance) {
-        await carregarHorariosDisponiveis(dateStr);
-      }
-    });
-
-  } catch (err) {
-    console.error("Erro ao carregar dias disponíveis:", err);
-  }
-}
-
+// APENAS UMA VERSÃO LIMPA E CORRETA DA INICIALIZAÇÃO DO CALENDÁRIO
 async function inicializarCalendario() {
   const inputData = document.getElementById('data');
   const selectHorarios = document.getElementById('horario');
@@ -542,9 +504,7 @@ async function inicializarCalendario() {
       dateFormat: "Y-m-d",
       minDate: "today",
       enable: diasPermitidos,
-      // Disparado quando o usuário altera ou escolhe uma data
       onChange: async function(selectedDates, dateStr, instance) {
-        // Se o usuário desmarcou ou limpou a data, limpa os horários
         if (!dateStr) {
           limparHorarios();
           return;
@@ -561,53 +521,7 @@ async function inicializarCalendario() {
   if (selectHorarios) {
     selectHorarios.addEventListener('mousedown', function(e) {
       if (!inputData.value) {
-        e.preventDefault(); // Impede abrir/interagir com o select
-        alert("Por favor, selecione uma data no calendário primeiro!");
-        inputData.focus();
-      }
-    });
-  }
-}
-
-async function inicializarCalendario() {
-  const inputData = document.getElementById('data');
-  const selectHorarios = document.getElementById('horario');
-  
-  if (!inputData || typeof flatpickr === 'undefined') return;
-
-  try {
-    const resposta = await fetch(`${API_URL}/api/agenda/dias`);
-    let diasPermitidos = [];
-    
-    if (resposta.ok) {
-      diasPermitidos = await resposta.json();
-    }
-
-    flatpickr(inputData, {
-      locale: "pt",
-      dateFormat: "Y-m-d",
-      minDate: "today",
-      enable: diasPermitidos,
-      // Disparado quando o usuário altera ou escolhe uma data
-      onChange: async function(selectedDates, dateStr, instance) {
-        // Se o usuário desmarcou ou limpou a data, limpa os horários
-        if (!dateStr) {
-          limparHorarios();
-          return;
-        }
-        await carregarHorariosDisponiveis(dateStr);
-      }
-    });
-
-  } catch (err) {
-    console.error("Erro ao carregar dias disponíveis:", err);
-  }
-
-  // Trava de segurança: se clicar no campo de horário sem ter data escolhida
-  if (selectHorarios) {
-    selectHorarios.addEventListener('mousedown', function(e) {
-      if (!inputData.value) {
-        e.preventDefault(); // Impede abrir/interagir com o select
+        e.preventDefault(); 
         alert("Por favor, selecione uma data no calendário primeiro!");
         inputData.focus();
       }
@@ -664,5 +578,5 @@ document.addEventListener("DOMContentLoaded", () => {
   carregarServicos();
   carregarAgendamentos();
   carregarContato(); 
-  inicializarCalendario(); // Ativa o calendário personalizado
+  inicializarCalendario(); 
 });
