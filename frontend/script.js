@@ -501,32 +501,34 @@ async function inicializarCalendario() {
   if (!inputData || typeof flatpickr === 'undefined') return;
 
   try {
-    // Faz uma requisição para buscar os dias disponíveis cadastrados na coleção 'agenda'
-    const res = `${API_URL}/api/agenda-disponivel`; // Substitua pela rota exata do seu backend que lista os IDs/datas da agenda
-    // Caso seu backend retorne um array de strings com as datas (ex: ["2026-08-12", "2026-08-13"])
+    // Faz a requisição para a nova rota da API que retorna o array de datas (ex: ["2026-08-12", "2026-08-13"])
+    const resposta = await fetch(`${API_URL}/api/agenda/dias`);
+    let diasPermitidos = [];
     
-    const resposta = await fetch(`${API_URL}/api/agenda/dias`); // Ajuste o endpoint conforme sua API
-    const diasPermitidos = await resposta.json(); // Espera-se um array como: ['2026-08-12', '2026-08-13']
+    if (resposta.ok) {
+      diasPermitidos = await resposta.json();
+    }
 
     flatpickr(inputData, {
       locale: "pt",
       dateFormat: "Y-m-d",
       minDate: "today",
-      // Habilita apenas as datas que existem no array retornado pelo banco
-      enable: diasPermitidos, 
+      // Habilita estritamente apenas as datas cadastradas no Firestore
+      enable: diasPermitidos,
       onDayCreate: function(dof, pf, st, dayElem) {
-        // Opcional: estilização extra para dias habilitados se precisar
+        // Opcional para estilizações extras de dias habilitados/desabilitados
       }
     });
 
   } catch (err) {
     console.error("Erro ao carregar dias disponíveis para o calendário:", err);
     
-    // Fallback caso a API falhe: inicializa padrão bloqueando apenas o passado
+    // Fallback caso ocorra falha na conexão: bloqueia tudo para evitar agendamentos inválidos
     flatpickr(inputData, {
       locale: "pt",
       dateFormat: "Y-m-d",
-      minDate: "today"
+      minDate: "today",
+      enable: []
     });
   }
 }

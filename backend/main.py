@@ -19,6 +19,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/api/agenda/dias")
+def listar_dias_disponiveis():
+    agenda = fb.buscar_agenda_disponivel()
+    # Retorna apenas as chaves (datas, ex: ["2026-08-12", "2026-08-13"])
+    return list(agenda.keys())
+
 # -------------------------------------------------------------
 # MODELOS DE DADOS (Pydantic)
 # -------------------------------------------------------------
