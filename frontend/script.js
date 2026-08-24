@@ -233,9 +233,12 @@ async function agendar(e) {
       limparHorarios(); 
       carregarAgendamentos(); 
 
-      // Faz a mensagem de sucesso sumir após 5 segundos
+      // Faz a mensagem de sucesso sumir após 5 segundos garantindo a limpeza
       setTimeout(() => {
-        statusDiv.innerHTML = "";
+        const divAtualizada = document.getElementById('mensagemStatus');
+        if (divAtualizada) {
+          divAtualizada.innerHTML = "";
+        }
       }, 5000);
 
     } else {
