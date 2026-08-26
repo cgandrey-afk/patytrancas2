@@ -106,33 +106,41 @@ def deletar_agendamento(doc_id):
 def buscar_agenda_disponivel():
     agenda = {}
     docs = db.collection("agenda").stream()
+    
     for doc in docs:
         dados = doc.to_dict()
         data_str = doc.id or dados.get("data")
         
         trabalho = dados.get("horarios_de_trabalho", [])
         indisponiveis = dados.get("horarios_indisponiveis", [])
-        disponiveis = dados.get("horarios_disponiveis", [])
+        disponiveis_atual = dados.get("horarios_disponiveis")
         
-        # Se tem horários de trabalho mas falta calcular/salvar os disponíveis no Firebase:
-        if trabalho and not disponiveis:
-            if indisponiveis:
-                disponiveis = [h for h in trabalho if h not in indisponiveis]
-            else:
-                disponiveis = list(trabalho)
-            
-            # GRAVAÇÃO AUTOMÁTICA NO BANCO: Salva o campo calculado direto no Firebase
-            if data_str:
-                try:
-                    db.collection("agenda").document(data_str).set({
-                        "horarios_disponiveis": disponiveis,
-                        "horarios_indisponiveis": indisponiveis
-                    }, merge=True)
-                except Exception as e:
-                    print(f"Erro ao salvar horários automáticos no banco: {e}")
+        # Recalcula os disponíveis subtraindo o que está ocupado
+        if trabalho:
+            disponiveis_calculados = [h for h in trabalho if h not in indisponiveis]
+        else:
+            disponiveis_calculados = disponiveis_atual if disponiveis_atual is not None else []
 
-        if data_str and disponiveis:
-            agenda[data_str] = disponiveis
+        # TRAVA INTELIGENTE: Verifica se os campos faltam ou se precisam de atualização
+        campos_faltando = (
+            "horarios_disponiveis" not in dados or 
+            "horarios_indisponiveis" not in dados or 
+            dados.get("horarios_disponiveis") != disponiveis_calculados
+        )
+
+        if data_str and trabalho and campos_faltando:
+            try:
+                # Se não tiver os campos, o merge=True cria. Se tiver, ele apenas atualiza os dados.
+                db.collection("agenda").document(data_str).set({
+                    "horarios_disponiveis": disponiveis_calculados,
+                    "horarios_indisponiveis": indisponiveis if "horarios_indisponiveis" in dados else [],
+                    "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
+                }, merge=True)
+            except Exception as e:
+                print(f"Erro ao criar/atualizar campos no banco: {e}")
+
+        if data_str and disponiveis_calculados:
+            agenda[data_str] = disponiveis_calculados
             
     return agenda
 
