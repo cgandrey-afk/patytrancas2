@@ -110,38 +110,116 @@ def buscar_agenda_disponivel():
         dados = doc.to_dict()
         # Usa prioritariamente o ID do documento (ex: '2026-08-26') como a data oficial
         data_str = doc.id or dados.get("data")
+        # Retorna apenas os horários que continuam disponíveis para novos clientes
         horarios = dados.get("horarios_disponiveis", [])
         if data_str and horarios:
             agenda[data_str] = horarios
     return agenda
 
-def salvar_agenda(data_str, horarios):
-    db.collection("agenda").document(data_str).set({
-        "data": data_str,
-        "horarios_disponiveis": horarios,
-        "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
-    })
+def salvar_agenda(data_str, horarios_trabalho):
+    """
+    Cadastra/Atualiza a agenda do dia definindo os horários de trabalho.
+    Mantém os horários que já estavam indisponíveis e recalcula os disponíveis.
+    """
+    doc_ref = db.collection("agenda").document(data_str)
+    doc = doc_ref.get()
+    
+    if doc.exists:
+        dados = doc.to_dict()
+        indisponiveis = dados.get("horarios_indisponiveis", [])
+        
+        # Filtra os horários de trabalho tirando os que já estão ocupados
+        disponiveis = [h for h in horarios_trabalho if h not in indisponiveis]
+        
+        doc_ref.set({
+            "data": data_str,
+            "horarios_de_trabalho": horarios_trabalho,
+            "horarios_disponiveis": disponiveis,
+            "horarios_indisponiveis": indisponiveis,
+            "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
+        }, merge=True)
+    else:
+        # Se for um dia totalmente novo, todos entram como disponíveis
+        doc_ref.set({
+            "data": data_str,
+            "horarios_de_trabalho": horarios_trabalho,
+            "horarios_disponiveis": horarios_trabalho,
+            "horarios_indisponiveis": [],
+            "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
+        })
 
-def remover_horario_agenda(data_str, horario):
+def mover_horario_para_indisponivel(data_str, horario):
+    """
+    Tira o horário de 'horarios_disponiveis' e joga para 'horarios_indisponiveis'
+    quando um agendamento é efetuado.
+    """
     doc_ref = db.collection("agenda").document(data_str)
     doc = doc_ref.get()
     if doc.exists:
-        horarios = doc.to_dict().get("horarios_disponiveis", [])
-        novos_horarios = [h for h in horarios if h != horario]
-        if novos_horarios:
-            doc_ref.update({"horarios_disponiveis": novos_horarios})
-        else:
-            doc_ref.delete()
+        dados = doc.to_dict()
+        disponiveis = dados.get("horarios_disponiveis", [])
+        indisponiveis = dados.get("horarios_indisponiveis", [])
+        
+        if horario in disponiveis:
+            disponiveis.remove(horario)
+        if horario not in indisponiveis:
+            indisponiveis.append(horario)
+            
+        doc_ref.update({
+            "horarios_disponiveis": disponiveis,
+            "horarios_indisponiveis": indisponiveis,
+            "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
+        })
+
+def voltar_horario_para_disponivel(data_str, horario):
+    """
+    Devolve o horário de 'horarios_indisponiveis' para 'horarios_disponiveis'
+    caso um agendamento seja cancelado ou removido.
+    """
+    doc_ref = db.collection("agenda").document(data_str)
+    doc = doc_ref.get()
+    if doc.exists:
+        dados = doc.to_dict()
+        disponiveis = dados.get("horarios_disponiveis", [])
+        indisponiveis = dados.get("horarios_indisponiveis", [])
+        trabalho = dados.get("horarios_de_trabalho", [])
+        
+        if horario in indisponiveis:
+            indisponiveis.remove(horario)
+        if horario not in disponiveis and horario in trabalho:
+            disponiveis.append(horario)
+            disponiveis.sort() # Mantém ordenado cronologicamente
+            
+        doc_ref.update({
+            "horarios_disponiveis": disponiveis,
+            "horarios_indisponiveis": indisponiveis,
+            "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
+        })
 
 def deletar_agenda(data_str):
     db.collection("agenda").document(data_str).delete()
     
 def cancelar_agendamento_db(user_id: str, doc_id: str, status_atual: str):
     try:
+        # Primeiro, buscamos os dados do agendamento antes de mexer/deletar para saber a data e o horário
         doc_ref = db.collection("usuarios").document(user_id).collection("agendamentos").document(doc_id)
+        doc_dados = doc_ref.get()
+        
+        data_agend = None
+        horario = None
+        if doc_dados.exists:
+            d = doc_dados.to_dict()
+            data_agend = d.get("data_agendamento")
+            horario = d.get("horario")
+
         if status_atual == "Pendente":
-            # Se for Pendente, deleta fisicamente do banco
+            # Se for Pendente, deleta fisicamente do banco do usuário
             doc_ref.delete()
+            
+            # Devolve o horário para a agenda se existirem os dados
+            if data_agend and horario:
+                voltar_horario_para_disponivel(data_agend, horario)
+                
             return {"acao": "deletado", "mensagem": "Agendamento cancelado e removido."}
         else:
             # Se for Aprovado, marca a flag e define o status_cancelamento como Pendente

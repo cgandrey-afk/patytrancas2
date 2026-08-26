@@ -28,7 +28,7 @@ def listar_dias_disponiveis():
 @app.get("/api/agenda/horarios/{data}")
 def listar_horarios_por_data(data: str):
     agenda = fb.buscar_agenda_disponivel()
-    # Retorna os horários daquela data específica, ou uma lista vazia se não houver
+    # Retorna os horários disponíveis daquela data específica
     return agenda.get(data, [])
 
 # -------------------------------------------------------------
@@ -94,8 +94,8 @@ def criar_agendamento(req: AgendamentoRequest):
         req.horario
     )
     if sucesso:
-        # Atualiza a agenda removendo o horário reservado
-        fb.remover_horario_agenda(req.data_agendamento, req.horario)
+        # Move o horário reservado de 'disponiveis' para 'indisponiveis'
+        fb.mover_horario_para_indisponivel(req.data_agendamento, req.horario)
         return {"mensagem": "Agendamento realizado com sucesso!"}
     raise HTTPException(status_code=500, detail="Erro ao salvar agendamento.")
     
