@@ -102,8 +102,8 @@ def criar_agendamento(req: AgendamentoRequest):
         req.horario
     )
     if sucesso:
-        # Move o horário reservado de 'disponiveis' para 'indisponiveis'
-        fb.mover_horario_para_indisponivel(req.data_agendamento, req.horario)
+        # Passa também o serviço para bloquear todos os blocos de horário correspondentes à duração
+        fb.mover_horario_para_indisponivel(req.data_agendamento, req.horario, req.servico)
         return {"mensagem": "Agendamento realizado com sucesso!"}
     raise HTTPException(status_code=500, detail="Erro ao salvar agendamento.")
     
@@ -127,7 +127,8 @@ def obter_contato():
 
 @app.put("/api/agendamentos/status")
 def atualizar_status(req: StatusUpdateRequest):
-    fb.atualizar_status_agendamento(req.user_id, req.doc_id, req.novo_status)
+    # Ajustado para refletir a assinatura padrão do firebase_config (atualiza pelo doc_id)
+    fb.atualizar_status_agendamento(req.doc_id, req.novo_status)
     return {"mensagem": "Status atualizado!"}
 
 # --- CANCELAMENTO CONDICIONAL ---
@@ -148,7 +149,7 @@ def solicitar_reagendamento_rota(req: ReagendarAprovadoRequest):
 
 @app.delete("/api/agendamentos/{user_id}/{doc_id}")
 def deletar_agendamento(user_id: str, doc_id: str):
-    fb.deletar_agendamento(user_id, doc_id)
+    fb.deletar_agendamento(doc_id)
     return {"mensagem": "Agendamento excluído!"}
 
 # --- AGENDA DE HORÁRIOS ---

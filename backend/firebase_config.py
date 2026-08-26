@@ -36,18 +36,73 @@ def carregar_agendamentos(user_id: str):
         print(f"Erro ao carregar agendamentos do usuário: {e}")
         return []
 
+def carregar_servicos():
+    try:
+        docs = db.collection("servicos").stream()
+        servicos = []
+        for doc in docs:
+            dados = doc.to_dict()
+            if "nome" not in dados or not dados["nome"]:
+                dados["nome"] = doc.id
+            dados["id"] = doc.id
+            # Garante que o serviço tenha um campo de duração padrão (ex: 1 hora se não especificado)
+            if "duracao_horas" not in dados:
+                dados["duracao_horas"] = 1
+            servicos.append(dados)
+        return servicos
+    except Exception as e:
+        print(f"Erro ao carregar serviços: {e}")
+        return []
+
+def obter_duracao_servico(nome_servico: str):
+    """Busca quantas horas o serviço dura baseando-se no banco de dados"""
+    try:
+        doc = db.collection("servicos").document(nome_servico).get()
+        if doc.exists:
+            return doc.to_dict().get("duracao_horas", 1)
+        
+        servicos = carregar_servicos()
+        for s in servicos:
+            if s.get("nome") == nome_servico or s.get("id") == nome_servico:
+                return s.get("duracao_horas", 1)
+        return 1
+    except Exception as e:
+        print(f"Erro ao buscar duração do serviço: {e}")
+        return 1
+
+def calcular_blocos_horarios(horario_inicial: str, duracao_horas: int):
+    """Gera a lista de horários ocupados com base na hora inicial e duração (ex: '8:00' + 3h -> ['8:00', '9:00', '10:00'])"""
+    try:
+        hora_str = horario_inicial.split(":")[0]
+        h_inicial = int(hora_str)
+        
+        horarios_gerados = []
+        for i in range(duracao_horas):
+            hora_atual = h_inicial + i
+            horarios_gerados.append(f"{hora_atual}:00")
+            
+        return horarios_gerados
+    except Exception as e:
+        print(f"Erro ao calcular blocos de horários: {e}")
+        return [horario_inicial]
+
 def salvar_agendamento(user_id, nome, telefone, servico, data_agend, horario):
     try:
+        # Descobre a duração e calcula todos os blocos ocupados
+        duracao = obter_duracao_servico(servico)
+        lista_horarios = calcular_blocos_horarios(horario, duracao)
+
         novo_registro = {
             "cliente_nome": nome,
             "cliente_telefone": telefone,
             "servico": servico,
             "data_agendamento": str(data_agend),
             "horario": horario,
+            "horarios_ocupados": lista_horarios, # Salva a lista completa (ex: ["8:00", "9:00", "10:00"])
             "status": "Pendente",
             "criado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
         }
-        # Salva na estrutura: usuarios > {user_id} > agendamentos > {id_automatico}
+        
         db.collection("usuarios").document(user_id).collection("agendamentos").add(novo_registro)
         return True
     except Exception as e:
@@ -74,21 +129,6 @@ def buscar_contato():
         print(f"Erro ao buscar contato: {e}")
         return None
     
-def carregar_servicos():
-    try:
-        docs = db.collection("servicos").stream()
-        servicos = []
-        for doc in docs:
-            dados = doc.to_dict()
-            if "nome" not in dados or not dados["nome"]:
-                dados["nome"] = doc.id
-            dados["id"] = doc.id
-            servicos.append(dados)
-        return servicos
-    except Exception as e:
-        print(f"Erro ao carregar serviços: {e}")
-        return []
-    
 def buscar_banners():
     doc_ref = db.collection("configuracoes").document("banners")
     doc = doc_ref.get()
@@ -113,7 +153,6 @@ def buscar_agenda_disponivel():
         trabalho = dados.get("horarios_de_trabalho", [])
         indisponiveis = dados.get("horarios_indisponiveis", [])
         
-        # Recalcula sempre os disponíveis subtraindo o que está ocupado
         if trabalho:
             disponiveis_calculados = [h for h in trabalho if h not in indisponiveis]
         else:
@@ -125,10 +164,6 @@ def buscar_agenda_disponivel():
     return agenda
 
 def salvar_agenda(data_str, horarios_trabalho):
-    """
-    Cadastra/Atualiza a agenda do dia definindo os horários de trabalho.
-    Mantém os horários que já estavam indisponíveis e recalcula os disponíveis.
-    """
     doc_ref = db.collection("agenda").document(data_str)
     doc = doc_ref.get()
     
@@ -136,7 +171,6 @@ def salvar_agenda(data_str, horarios_trabalho):
         dados = doc.to_dict()
         indisponiveis = dados.get("horarios_indisponiveis", [])
         
-        # Filtra os horários de trabalho tirando os que já estão ocupados
         disponiveis = [h for h in horarios_trabalho if h not in indisponiveis]
         
         doc_ref.set({
@@ -147,7 +181,6 @@ def salvar_agenda(data_str, horarios_trabalho):
             "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
         }, merge=True)
     else:
-        # Se for um dia totalmente novo, todos entram como disponíveis
         doc_ref.set({
             "data": data_str,
             "horarios_de_trabalho": horarios_trabalho,
@@ -156,7 +189,11 @@ def salvar_agenda(data_str, horarios_trabalho):
             "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
         })
 
-def mover_horario_para_indisponivel(data_str, horario):
+def mover_horario_para_indisponivel(data_str, horario_inicial, servico):
+    """Move todos os blocos de horários correspondentes à duração do serviço para indisponíveis"""
+    duracao = obter_duracao_servico(servico)
+    horarios_a_bloquear = calcular_blocos_horarios(horario_inicial, duracao)
+
     doc_ref = db.collection("agenda").document(data_str)
     doc = doc_ref.get()
     if doc.exists:
@@ -164,10 +201,11 @@ def mover_horario_para_indisponivel(data_str, horario):
         disponiveis = dados.get("horarios_disponiveis", [])
         indisponiveis = dados.get("horarios_indisponiveis", [])
         
-        if horario in disponiveis:
-            disponiveis.remove(horario)
-        if horario not in indisponiveis:
-            indisponiveis.append(horario)
+        for h in horarios_a_bloquear:
+            if h in disponiveis:
+                disponiveis.remove(h)
+            if h not in indisponiveis:
+                indisponiveis.append(h)
             
         doc_ref.update({
             "horarios_disponiveis": disponiveis,
@@ -175,7 +213,11 @@ def mover_horario_para_indisponivel(data_str, horario):
             "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
         })
 
-def voltar_horario_para_disponivel(data_str, horario):
+def voltar_horario_para_disponivel(data_str, horario_inicial, servico):
+    """Devolve todos os blocos de horários do serviço cancelado para a lista de disponíveis"""
+    duracao = obter_duracao_servico(servico)
+    horarios_a_liberar = calcular_blocos_horarios(horario_inicial, duracao)
+
     doc_ref = db.collection("agenda").document(data_str)
     doc = doc_ref.get()
     if doc.exists:
@@ -184,11 +226,13 @@ def voltar_horario_para_disponivel(data_str, horario):
         indisponiveis = dados.get("horarios_indisponiveis", [])
         trabalho = dados.get("horarios_de_trabalho", [])
         
-        if horario in indisponiveis:
-            indisponiveis.remove(horario)
-        if horario not in disponiveis and horario in trabalho:
-            disponiveis.append(horario)
-            disponiveis.sort()
+        for h in horarios_a_liberar:
+            if h in indisponiveis:
+                indisponiveis.remove(h)
+            if h not in disponiveis and h in trabalho:
+                disponiveis.append(h)
+                
+        disponiveis.sort(key=lambda x: int(x.split(":")[0]))
             
         doc_ref.update({
             "horarios_disponiveis": disponiveis,
@@ -199,7 +243,7 @@ def voltar_horario_para_disponivel(data_str, horario):
 def deletar_agenda(data_str):
     db.collection("agenda").document(data_str).delete()
 
-# --- MONITORAMENTO EM TEMPO REAL (Sincroniza automaticamente se alterado no painel) ---
+# --- MONITORAMENTO EM TEMPO REAL ---
 def processar_atualizacao_automatica(doc_ref, dados):
     try:
         trabalho = dados.get("horarios_de_trabalho", [])
@@ -209,10 +253,8 @@ def processar_atualizacao_automatica(doc_ref, dados):
         if not trabalho:
             return
 
-        # Recalcula o que deve estar disponível
         disponiveis_calculados = [h for h in trabalho if h not in indisponiveis]
 
-        # Se houver divergência ou faltar o campo, atualiza o banco na hora
         if disponiveis_atuais != disponiveis_calculados or "horarios_disponiveis" not in dados:
             doc_ref.set({
                 "horarios_disponiveis": disponiveis_calculados,
@@ -241,15 +283,17 @@ def cancelar_agendamento_db(user_id: str, doc_id: str, status_atual: str):
         
         data_agend = None
         horario = None
+        servico = None
         if doc_dados.exists:
             d = doc_dados.to_dict()
             data_agend = d.get("data_agendamento")
             horario = d.get("horario")
+            servico = d.get("servico")
 
         if status_atual == "Pendente":
             doc_ref.delete()
-            if data_agend and horario:
-                voltar_horario_para_disponivel(data_agend, horario)
+            if data_agend and horario and servico:
+                voltar_horario_para_disponivel(data_agend, horario, servico)
             return {"acao": "deletado", "mensagem": "Agendamento cancelado e removido."}
         else:
             doc_ref.update({
