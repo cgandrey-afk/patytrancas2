@@ -110,18 +110,26 @@ def buscar_agenda_disponivel():
         dados = doc.to_dict()
         data_str = doc.id or dados.get("data")
         
-        # Pega as listas do banco
         trabalho = dados.get("horarios_de_trabalho", [])
         indisponiveis = dados.get("horarios_indisponiveis", [])
         disponiveis = dados.get("horarios_disponiveis", [])
         
-        # Inteligência de segurança: se você cadastrou 'horarios_de_trabalho' manualmente 
-        # mas esqueceu de criar o 'horarios_disponiveis', a API calcula na hora para você!
-        if trabalho and not disponiveis and not indisponiveis:
-            disponiveis = list(trabalho)
-        elif trabalho and not disponiveis:
-            # Se já tem alguns indisponíveis, filtra o que sobrou
-            disponiveis = [h for h in trabalho if h not in indisponiveis]
+        # Se tem horários de trabalho mas falta calcular/salvar os disponíveis no Firebase:
+        if trabalho and not disponiveis:
+            if indisponiveis:
+                disponiveis = [h for h in trabalho if h not in indisponiveis]
+            else:
+                disponiveis = list(trabalho)
+            
+            # GRAVAÇÃO AUTOMÁTICA NO BANCO: Salva o campo calculado direto no Firebase
+            if data_str:
+                try:
+                    db.collection("agenda").document(data_str).set({
+                        "horarios_disponiveis": disponiveis,
+                        "horarios_indisponiveis": indisponiveis
+                    }, merge=True)
+                except Exception as e:
+                    print(f"Erro ao salvar horários automáticos no banco: {e}")
 
         if data_str and disponiveis:
             agenda[data_str] = disponiveis
