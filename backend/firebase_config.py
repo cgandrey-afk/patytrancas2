@@ -108,12 +108,24 @@ def buscar_agenda_disponivel():
     docs = db.collection("agenda").stream()
     for doc in docs:
         dados = doc.to_dict()
-        # Usa prioritariamente o ID do documento (ex: '2026-08-26') como a data oficial
         data_str = doc.id or dados.get("data")
-        # Retorna apenas os horários que continuam disponíveis para novos clientes
-        horarios = dados.get("horarios_disponiveis", [])
-        if data_str and horarios:
-            agenda[data_str] = horarios
+        
+        # Pega as listas do banco
+        trabalho = dados.get("horarios_de_trabalho", [])
+        indisponiveis = dados.get("horarios_indisponiveis", [])
+        disponiveis = dados.get("horarios_disponiveis", [])
+        
+        # Inteligência de segurança: se você cadastrou 'horarios_de_trabalho' manualmente 
+        # mas esqueceu de criar o 'horarios_disponiveis', a API calcula na hora para você!
+        if trabalho and not disponiveis and not indisponiveis:
+            disponiveis = list(trabalho)
+        elif trabalho and not disponiveis:
+            # Se já tem alguns indisponíveis, filtra o que sobrou
+            disponiveis = [h for h in trabalho if h not in indisponiveis]
+
+        if data_str and disponiveis:
+            agenda[data_str] = disponiveis
+            
     return agenda
 
 def salvar_agenda(data_str, horarios_trabalho):
