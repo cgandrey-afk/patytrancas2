@@ -242,10 +242,11 @@ def buscar_agenda_disponivel():
 def salvar_agenda(data_str, horarios_trabalho):
     """
     Cadastra/Atualiza a agenda do dia. 
-    Expande automaticamente os horários passados para blocos de 30 em 30 minutos.
+    Expande e já grava os disponíveis totalmente quebrados e ordenados de 30 em 30 minutos.
     """
-    # Expande os horários enviados (ex: '7', '8' vira '7:00', '7:30', '8:00', '8:30')
     horarios_completos = expandir_horarios_30min(horarios_trabalho)
+    # Garante a ordenação correta logo na origem
+    horarios_completos.sort(key=lambda x: [int(p) for p in x.split(":")])
 
     doc_ref = db.collection("agenda").document(data_str)
     doc = doc_ref.get()
@@ -255,6 +256,7 @@ def salvar_agenda(data_str, horarios_trabalho):
         indisponiveis = dados.get("horarios_indisponiveis", [])
         
         disponiveis = [h for h in horarios_completos if h not in indisponiveis]
+        disponiveis.sort(key=lambda x: [int(p) for p in x.split(":")])
         
         doc_ref.set({
             "data": data_str,
@@ -289,6 +291,9 @@ def mover_horario_para_indisponivel(data_str, horario_inicial, servico):
                 disponiveis.remove(h)
             if h not in indisponiveis:
                 indisponiveis.append(h)
+                
+        disponiveis.sort(key=lambda x: [int(p) for p in x.split(":")])
+        indisponiveis.sort(key=lambda x: [int(p) for p in x.split(":")])
             
         doc_ref.update({
             "horarios_disponiveis": disponiveis,
@@ -297,7 +302,7 @@ def mover_horario_para_indisponivel(data_str, horario_inicial, servico):
         })
 
 def voltar_horario_para_disponivel(data_str, horario_inicial, servico):
-    """Devolve todos os blocos de horários (incluindo os de 30min) de volta para os disponíveis"""
+    """Devolve todos os blocos de horários de volta para os disponíveis"""
     duracao = obter_duracao_servico(servico)
     horarios_a_liberar = calcular_blocos_horarios(horario_inicial, duracao)
 
@@ -315,8 +320,8 @@ def voltar_horario_para_disponivel(data_str, horario_inicial, servico):
             if h not in disponiveis and h in trabalho:
                 disponiveis.append(h)
                 
-        # Ordena cronologicamente os horários considerando horas e minutos
         disponiveis.sort(key=lambda x: [int(p) for p in x.split(":")])
+        indisponiveis.sort(key=lambda x: [int(p) for p in x.split(":")])
             
         doc_ref.update({
             "horarios_disponiveis": disponiveis,
@@ -327,7 +332,7 @@ def voltar_horario_para_disponivel(data_str, horario_inicial, servico):
 def deletar_agenda(data_str):
     db.collection("agenda").document(data_str).delete()
 
-# --- MONITORAMENTO EM TEMPO REAL ---
+# --- MONITORAMENTO EM TEMPO REAL (BLINDADO CONTRA LOOP) ---
 def processar_atualizacao_automatica(doc_ref, dados):
     try:
         trabalho = dados.get("horarios_de_trabalho", [])
@@ -337,16 +342,21 @@ def processar_atualizacao_automatica(doc_ref, dados):
         if not trabalho:
             return
 
-        # Expande os horários de trabalho automaticamente aqui também
+        # Expande e ordena tudo rigorosamente
         trabalho_expandido = expandir_horarios_30min(trabalho)
+        trabalho_expandido.sort(key=lambda x: [int(p) for p in x.split(":")])
+        
         disponiveis_calculados = [h for h in trabalho_expandido if h not in indisponiveis]
+        disponiveis_calculados.sort(key=lambda x: [int(p) for p in x.split(":")])
+        disponiveis_atuais.sort(key=lambda x: [int(p) for p in x.split(":")])
 
-        if disponiveis_atuais != disponiveis_calculados or "horarios_disponiveis" not in dados:
-            doc_ref.set({
+        # Só dispara o update se houver real divergência para evitar loop infinito
+        if disponiveis_atuais != disponiveis_calculados or trabalho != trabalho_expandido:
+            doc_ref.update({
                 "horarios_de_trabalho": trabalho_expandido,
                 "horarios_disponiveis": disponiveis_calculados,
                 "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
-            }, merge=True)
+            })
     except Exception as e:
         print(f"Erro na sincronização automática da agenda: {e}")
 
