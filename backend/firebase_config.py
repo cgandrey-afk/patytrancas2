@@ -1,5 +1,6 @@
 import os
 import json
+import threading
 import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime
@@ -79,10 +80,8 @@ def carregar_servicos():
         servicos = []
         for doc in docs:
             dados = doc.to_dict()
-            # Garante que o nome seja pego do campo 'nome' ou, se não existir, usa o ID do documento ("Box Braids")
             if "nome" not in dados or not dados["nome"]:
                 dados["nome"] = doc.id
-            
             dados["id"] = doc.id
             servicos.append(dados)
         return servicos
@@ -113,31 +112,12 @@ def buscar_agenda_disponivel():
         
         trabalho = dados.get("horarios_de_trabalho", [])
         indisponiveis = dados.get("horarios_indisponiveis", [])
-        disponiveis_atual = dados.get("horarios_disponiveis")
         
-        # Recalcula os disponíveis subtraindo o que está ocupado
+        # Recalcula sempre os disponíveis subtraindo o que está ocupado
         if trabalho:
             disponiveis_calculados = [h for h in trabalho if h not in indisponiveis]
         else:
-            disponiveis_calculados = disponiveis_atual if disponiveis_atual is not None else []
-
-        # TRAVA INTELIGENTE: Verifica se os campos faltam ou se precisam de atualização
-        campos_faltando = (
-            "horarios_disponiveis" not in dados or 
-            "horarios_indisponiveis" not in dados or 
-            dados.get("horarios_disponiveis") != disponiveis_calculados
-        )
-
-        if data_str and trabalho and campos_faltando:
-            try:
-                # Se não tiver os campos, o merge=True cria. Se tiver, ele apenas atualiza os dados.
-                db.collection("agenda").document(data_str).set({
-                    "horarios_disponiveis": disponiveis_calculados,
-                    "horarios_indisponiveis": indisponiveis if "horarios_indisponiveis" in dados else [],
-                    "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
-                }, merge=True)
-            except Exception as e:
-                print(f"Erro ao criar/atualizar campos no banco: {e}")
+            disponiveis_calculados = dados.get("horarios_disponiveis", [])
 
         if data_str and disponiveis_calculados:
             agenda[data_str] = disponiveis_calculados
@@ -177,10 +157,6 @@ def salvar_agenda(data_str, horarios_trabalho):
         })
 
 def mover_horario_para_indisponivel(data_str, horario):
-    """
-    Tira o horário de 'horarios_disponiveis' e joga para 'horarios_indisponiveis'
-    quando um agendamento é efetuado.
-    """
     doc_ref = db.collection("agenda").document(data_str)
     doc = doc_ref.get()
     if doc.exists:
@@ -200,10 +176,6 @@ def mover_horario_para_indisponivel(data_str, horario):
         })
 
 def voltar_horario_para_disponivel(data_str, horario):
-    """
-    Devolve o horário de 'horarios_indisponiveis' para 'horarios_disponiveis'
-    caso um agendamento seja cancelado ou removido.
-    """
     doc_ref = db.collection("agenda").document(data_str)
     doc = doc_ref.get()
     if doc.exists:
@@ -216,7 +188,7 @@ def voltar_horario_para_disponivel(data_str, horario):
             indisponiveis.remove(horario)
         if horario not in disponiveis and horario in trabalho:
             disponiveis.append(horario)
-            disponiveis.sort() # Mantém ordenado cronologicamente
+            disponiveis.sort()
             
         doc_ref.update({
             "horarios_disponiveis": disponiveis,
@@ -226,10 +198,44 @@ def voltar_horario_para_disponivel(data_str, horario):
 
 def deletar_agenda(data_str):
     db.collection("agenda").document(data_str).delete()
-    
+
+# --- MONITORAMENTO EM TEMPO REAL (Sincroniza automaticamente se alterado no painel) ---
+def processar_atualizacao_automatica(doc_ref, dados):
+    try:
+        trabalho = dados.get("horarios_de_trabalho", [])
+        indisponiveis = dados.get("horarios_indisponiveis", [])
+        disponiveis_atuais = dados.get("horarios_disponiveis", [])
+        
+        if not trabalho:
+            return
+
+        # Recalcula o que deve estar disponível
+        disponiveis_calculados = [h for h in trabalho if h not in indisponiveis]
+
+        # Se houver divergência ou faltar o campo, atualiza o banco na hora
+        if disponiveis_atuais != disponiveis_calculados or "horarios_disponiveis" not in dados:
+            doc_ref.set({
+                "horarios_disponiveis": disponiveis_calculados,
+                "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
+            }, merge=True)
+    except Exception as e:
+        print(f"Erro na sincronização automática da agenda: {e}")
+
+def monitorar_agenda_callback(col_snapshot, changes, read_time):
+    for change in changes:
+        if change.type.name in ('ADDED', 'MODIFIED'):
+            processar_atualizacao_automatica(change.document.reference, change.document.to_dict())
+
+def iniciar_monitoramento_firestore():
+    try:
+        db.collection("agenda").on_snapshot(monitorar_agenda_callback)
+        print("[DB] Monitoramento automático da agenda ativado.")
+    except Exception as e:
+        print(f"Erro ao ligar monitoramento do Firestore: {e}")
+# ------------------------------------------------------------------------------------
+
 def cancelar_agendamento_db(user_id: str, doc_id: str, status_atual: str):
     try:
-        # Primeiro, buscamos os dados do agendamento antes de mexer/deletar para saber a data e o horário
         doc_ref = db.collection("usuarios").document(user_id).collection("agendamentos").document(doc_id)
         doc_dados = doc_ref.get()
         
@@ -241,16 +247,11 @@ def cancelar_agendamento_db(user_id: str, doc_id: str, status_atual: str):
             horario = d.get("horario")
 
         if status_atual == "Pendente":
-            # Se for Pendente, deleta fisicamente do banco do usuário
             doc_ref.delete()
-            
-            # Devolve o horário para a agenda se existirem os dados
             if data_agend and horario:
                 voltar_horario_para_disponivel(data_agend, horario)
-                
             return {"acao": "deletado", "mensagem": "Agendamento cancelado e removido."}
         else:
-            # Se for Aprovado, marca a flag e define o status_cancelamento como Pendente
             doc_ref.update({
                 "pedido_cancelamento": True,
                 "status_cancelamento": "Pendente"
@@ -264,7 +265,6 @@ def solicitar_reagendamento_db(user_id: str, doc_id: str, status_atual: str, nov
     try:
         doc_ref = db.collection("usuarios").document(user_id).collection("agendamentos").document(doc_id)
         if status_atual == "Aprovado":
-            # Se for Aprovado, adiciona as flags de reagendamento e o status_reag como Pendente
             doc_ref.update({
                 "pedido_reagendamento": True,
                 "status_reag": "Pendente",

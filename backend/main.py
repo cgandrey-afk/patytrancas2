@@ -3,12 +3,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
+from contextlib import asynccontextmanager
 
 # Importa módulos internos
 import firebase_config as fb
 import gemini_service as gemini
 
-app = FastAPI(title="Paty Tranças API", version="1.0.0")
+# Gerenciador de ciclo de vida para ligar o monitoramento do Firebase ao iniciar a API
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Liga o observador em background para sincronizar a agenda automaticamente
+    fb.iniciar_monitoramento_firestore()
+    yield
+
+app = FastAPI(title="Paty Tranças API", version="1.0.0", lifespan=lifespan)
 
 # Habilita CORS para permitir que o Frontend da Vercel faça chamadas à API
 app.add_middleware(
