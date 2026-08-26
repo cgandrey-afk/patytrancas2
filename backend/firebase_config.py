@@ -193,27 +193,6 @@ def atualizar_status_agendamento(doc_id, novo_status):
 def deletar_agendamento(doc_id):
     db.collection("agendamentos").document(doc_id).delete()
 
-def buscar_agenda_disponivel():
-    agenda = {}
-    docs = db.collection("agenda").stream()
-    
-    for doc in docs:
-        dados = doc.to_dict()
-        data_str = doc.id or dados.get("data")
-        
-        trabalho = dados.get("horarios_de_trabalho", [])
-        indisponiveis = dados.get("horarios_indisponiveis", [])
-        
-        if trabalho:
-            disponiveis_calculados = [h for h in trabalho if h not in indisponiveis]
-        else:
-            disponiveis_calculados = dados.get("horarios_disponiveis", [])
-
-        if data_str and disponiveis_calculados:
-            agenda[data_str] = disponiveis_calculados
-            
-    return agenda
-
 def expandir_horarios_30min(lista_horarios):
     """
     Recebe uma lista de horários (ex: ['7', '8', '14:00']) e 
@@ -233,8 +212,32 @@ def expandir_horarios_30min(lista_horarios):
         except Exception:
             continue
             
-    # Ordena cronologicamente os horários antes de salvar
+    # Ordena cronologicamente os horários antes de retornar
     return sorted(list(horarios_expandidos), key=lambda x: [int(p) for p in x.split(":")])
+
+def buscar_agenda_disponivel():
+    agenda = {}
+    docs = db.collection("agenda").stream()
+    
+    for doc in docs:
+        dados = doc.to_dict()
+        data_str = doc.id or dados.get("data")
+        
+        trabalho = dados.get("horarios_de_trabalho", [])
+        indisponiveis = dados.get("horarios_indisponiveis", [])
+        
+        # Expande os horários de trabalho para garantir que os de 30min apareçam
+        trabalho_expandido = expandir_horarios_30min(trabalho)
+        
+        if trabalho_expandido:
+            disponiveis_calculados = [h for h in trabalho_expandido if h not in indisponiveis]
+        else:
+            disponiveis_calculados = dados.get("horarios_disponiveis", [])
+
+        if data_str and disponiveis_calculados:
+            agenda[data_str] = disponiveis_calculados
+            
+    return agenda
 
 def salvar_agenda(data_str, horarios_trabalho):
     """
@@ -334,10 +337,13 @@ def processar_atualizacao_automatica(doc_ref, dados):
         if not trabalho:
             return
 
-        disponiveis_calculados = [h for h in trabalho if h not in indisponiveis]
+        # Expande os horários de trabalho automaticamente aqui também
+        trabalho_expandido = expandir_horarios_30min(trabalho)
+        disponiveis_calculados = [h for h in trabalho_expandido if h not in indisponiveis]
 
         if disponiveis_atuais != disponiveis_calculados or "horarios_disponiveis" not in dados:
             doc_ref.set({
+                "horarios_de_trabalho": trabalho_expandido,
                 "horarios_disponiveis": disponiveis_calculados,
                 "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
             }, merge=True)
