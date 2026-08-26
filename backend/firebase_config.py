@@ -57,14 +57,13 @@ def carregar_servicos():
         return []
 
 def obter_duracao_servico(nome_servico: str):
-    """Busca a duração do serviço no Firestore lendo o campo 'tempo_fazer' (ex: '3 a 4 horas')"""
+    """Busca a duração do serviço e retorna em formato de horas (ex: 0.5 para 30min, 1.5 para 1h30, 3 para 3h)"""
     try:
         doc = db.collection("servicos").document(nome_servico).get()
         dados = {}
         if doc.exists:
             dados = doc.to_dict()
         else:
-            # Se não achou pelo ID do documento, procura percorrendo os documentos pelo nome
             servicos = db.collection("servicos").stream()
             for s in servicos:
                 d = s.to_dict()
@@ -72,38 +71,70 @@ def obter_duracao_servico(nome_servico: str):
                     dados = d
                     break
 
-        # Procura o campo 'tempo_fazer' ou 'duracao_horas'
         texto_tempo = dados.get("tempo_fazer") or dados.get("duracao_horas")
         
         if texto_tempo:
-            # Se já for um número salvo, retorna ele direto
+            # Se já for número direto
             if isinstance(texto_tempo, (int, float)):
-                return int(texto_tempo)
+                return float(texto_tempo)
             
-            # Se for texto (ex: "3 a 4 horas"), extrai o primeiro número encontrado usando Regex
-            numeros = re.findall(r'\d+', str(texto_tempo))
+            texto_str = str(texto_tempo).lower()
+            
+            # Se explicitamente disser 30 min ou meia hora
+            if "30" in texto_str or "meia" in texto_str:
+                return 0.5
+            
+            # Procura por padrões como 1:30, 2:30
+            match_horas_minutos = re.search(r'(\d+):([30]+)', texto_str)
+            if match_horas_minutos:
+                h = int(match_horas_minutos.group(1))
+                m = int(match_horas_minutos.group(2))
+                if m == 30:
+                    return h + 0.5
+                return float(h)
+
+            # Extrai todos os números do texto
+            numeros = re.findall(r'\d+', texto_str)
             if numeros:
-                return int(numeros[0]) # Retorna o primeiro número (ex: 3)
+                return float(numeros[0]) # Retorna o primeiro número encontrado (ex: 3)
                 
-        return 1 # Fallback padrão se não encontrar nada
+        return 1.0 # Padrão 1 hora se não achar nada
     except Exception as e:
         print(f"Erro ao buscar duração do serviço: {e}")
-        return 1
+        return 1.0
 
-def calcular_blocos_horarios(horario_inicial: str, duracao_horas: int):
-    """Gera a lista de horários ocupados com base na hora inicial e duração (ex: '8:00' + 3h -> ['8:00', '9:00', '10:00'])"""
+def calcular_blocos_horarios(horario_inicial: str, duracao_horas: float):
+    """
+    Gera a lista de horários ocupados considerando saltos de 30 em 30 minutos.
+    Ex: '8:00' com duração 1.5 -> ['8:00', '8:30', '9:00']
+    """
     try:
-        hora_str = horario_inicial.split(":")[0]
-        h_inicial = int(hora_str)
+        partes = horario_inicial.split(":")
+        h_inicial = int(partes[0])
+        m_inicial = int(partes[1]) if len(partes) > 1 else 0
+        
+        # Converte o horário inicial total para minutos desde a meia-noite
+        total_minutos_inicio = (h_inicial * 60) + m_inicial
+        
+        # Converte a duração em horas para minutos (ex: 1.5h -> 90 minutos)
+        duracao_minutos = int(duracao_horas * 60)
         
         horarios_gerados = []
-        for i in range(duracao_horas):
-            hora_atual = h_inicial + i
-            horarios_gerados.append(f"{hora_atual}:00")
+        # Avança de 30 em 30 minutos até cobrir a duração total do serviço
+        minutos_correntes = total_minutos_inicio
+        while minutos_correntes < (total_minutos_inicio + duracao_minutos):
+            h = minutos_correntes // 60
+            m = minutos_correntes % 60
+            
+            # Formata bonitinho (ex: 8:00 ou 8:30)
+            horario_formatado = f"{h}:{m:02d}"
+            horarios_gerados.append(horario_formatado)
+            
+            minutos_correntes += 30
             
         return horarios_gerados
     except Exception as e:
-        print(f"Erro ao calcular blocos de horários: {e}")
+        print(f"Erro ao calcular blocos de horários com quebrados: {e}")
         return [horario_inicial]
 
 def salvar_agendamento(user_id, nome, telefone, servico, data_agend, horario):
@@ -183,7 +214,36 @@ def buscar_agenda_disponivel():
             
     return agenda
 
+def expandir_horarios_30min(lista_horarios):
+    """
+    Recebe uma lista de horários (ex: ['7', '8', '14:00']) e 
+    expande automaticamente para incluir os blocos de 30 minutos.
+    """
+    horarios_expandidos = set()
+    
+    for h_str in lista_horarios:
+        try:
+            # Limpa e converte para hora e minuto
+            partes = str(h_str).strip().split(":")
+            hora = int(partes[0])
+            
+            # Adiciona a hora cheia e a meia hora correspondente
+            horarios_expandidos.add(f"{hora}:00")
+            horarios_expandidos.add(f"{hora}:30")
+        except Exception:
+            continue
+            
+    # Ordena cronologicamente os horários antes de salvar
+    return sorted(list(horarios_expandidos), key=lambda x: [int(p) for p in x.split(":")])
+
 def salvar_agenda(data_str, horarios_trabalho):
+    """
+    Cadastra/Atualiza a agenda do dia. 
+    Expande automaticamente os horários passados para blocos de 30 em 30 minutos.
+    """
+    # Expande os horários enviados (ex: '7', '8' vira '7:00', '7:30', '8:00', '8:30')
+    horarios_completos = expandir_horarios_30min(horarios_trabalho)
+
     doc_ref = db.collection("agenda").document(data_str)
     doc = doc_ref.get()
     
@@ -191,11 +251,11 @@ def salvar_agenda(data_str, horarios_trabalho):
         dados = doc.to_dict()
         indisponiveis = dados.get("horarios_indisponiveis", [])
         
-        disponiveis = [h for h in horarios_trabalho if h not in indisponiveis]
+        disponiveis = [h for h in horarios_completos if h not in indisponiveis]
         
         doc_ref.set({
             "data": data_str,
-            "horarios_de_trabalho": horarios_trabalho,
+            "horarios_de_trabalho": horarios_completos,
             "horarios_disponiveis": disponiveis,
             "horarios_indisponiveis": indisponiveis,
             "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -203,14 +263,14 @@ def salvar_agenda(data_str, horarios_trabalho):
     else:
         doc_ref.set({
             "data": data_str,
-            "horarios_de_trabalho": horarios_trabalho,
-            "horarios_disponiveis": horarios_trabalho,
+            "horarios_de_trabalho": horarios_completos,
+            "horarios_disponiveis": horarios_completos,
             "horarios_indisponiveis": [],
             "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
         })
 
 def mover_horario_para_indisponivel(data_str, horario_inicial, servico):
-    """Move todos os blocos de horários correspondentes à duração do serviço para indisponíveis"""
+    """Move todos os blocos de horários (incluindo os de 30min) para indisponíveis"""
     duracao = obter_duracao_servico(servico)
     horarios_a_bloquear = calcular_blocos_horarios(horario_inicial, duracao)
 
@@ -234,7 +294,7 @@ def mover_horario_para_indisponivel(data_str, horario_inicial, servico):
         })
 
 def voltar_horario_para_disponivel(data_str, horario_inicial, servico):
-    """Devolve todos os blocos de horários do serviço cancelado para a lista de disponíveis"""
+    """Devolve todos os blocos de horários (incluindo os de 30min) de volta para os disponíveis"""
     duracao = obter_duracao_servico(servico)
     horarios_a_liberar = calcular_blocos_horarios(horario_inicial, duracao)
 
@@ -252,7 +312,8 @@ def voltar_horario_para_disponivel(data_str, horario_inicial, servico):
             if h not in disponiveis and h in trabalho:
                 disponiveis.append(h)
                 
-        disponiveis.sort(key=lambda x: int(x.split(":")[0]))
+        # Ordena cronologicamente os horários considerando horas e minutos
+        disponiveis.sort(key=lambda x: [int(p) for p in x.split(":")])
             
         doc_ref.update({
             "horarios_disponiveis": disponiveis,
