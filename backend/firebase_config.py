@@ -2,8 +2,10 @@ import os
 import json
 import threading
 import firebase_admin
+import re
 from firebase_admin import credentials, firestore
 from datetime import datetime
+
 
 # Inicialização do Firebase Admin
 if not firebase_admin._apps:
@@ -55,17 +57,35 @@ def carregar_servicos():
         return []
 
 def obter_duracao_servico(nome_servico: str):
-    """Busca quantas horas o serviço dura baseando-se no banco de dados"""
+    """Busca a duração do serviço no Firestore lendo o campo 'tempo_fazer' (ex: '3 a 4 horas')"""
     try:
         doc = db.collection("servicos").document(nome_servico).get()
+        dados = {}
         if doc.exists:
-            return doc.to_dict().get("duracao_horas", 1)
+            dados = doc.to_dict()
+        else:
+            # Se não achou pelo ID do documento, procura percorrendo os documentos pelo nome
+            servicos = db.collection("servicos").stream()
+            for s in servicos:
+                d = s.to_dict()
+                if d.get("nome") == nome_servico or s.id == nome_servico:
+                    dados = d
+                    break
+
+        # Procura o campo 'tempo_fazer' ou 'duracao_horas'
+        texto_tempo = dados.get("tempo_fazer") or dados.get("duracao_horas")
         
-        servicos = carregar_servicos()
-        for s in servicos:
-            if s.get("nome") == nome_servico or s.get("id") == nome_servico:
-                return s.get("duracao_horas", 1)
-        return 1
+        if texto_tempo:
+            # Se já for um número salvo, retorna ele direto
+            if isinstance(texto_tempo, (int, float)):
+                return int(texto_tempo)
+            
+            # Se for texto (ex: "3 a 4 horas"), extrai o primeiro número encontrado usando Regex
+            numeros = re.findall(r'\d+', str(texto_tempo))
+            if numeros:
+                return int(numeros[0]) # Retorna o primeiro número (ex: 3)
+                
+        return 1 # Fallback padrão se não encontrar nada
     except Exception as e:
         print(f"Erro ao buscar duração do serviço: {e}")
         return 1
