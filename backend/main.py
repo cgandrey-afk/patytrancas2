@@ -75,7 +75,7 @@ def listar_horarios_por_data(data: str):
                 dt_slot = agora.replace(hour=hora_slot, minute=min_slot, second=0, microsecond=0)
                 diferenca = dt_slot - agora
                 
-                # Se ainda faltam mais de 10 minutos, o horário continua disponível
+                # Se ainda faltam mais de 10 minutos, o horário continua disponível (caso contrário, é ocultado)
                 if diferenca > timedelta(minutes=10):
                     horarios_filtrados.append(h_str)
             
@@ -84,7 +84,7 @@ def listar_horarios_por_data(data: str):
     except Exception as e:
         print(f"Erro ao filtrar horários por tempo: {e}")
 
-    # Se for para qualquer outro dia futuro, retorna todos os horários normalmente
+    # Se for para qualquer outro dia futuro, retorna todos os horários livres normalmente
     return horarios_salvos
 
 # -------------------------------------------------------------
@@ -150,7 +150,7 @@ def criar_agendamento(req: AgendamentoRequest):
         req.horario
     )
     if sucesso:
-        # Passa também o serviço para bloquear todos os blocos de horário correspondentes à duração
+        # Move o horário de disponível para indisponível (ou bloqueia o intervalo do serviço)
         fb.mover_horario_para_indisponivel(req.data_agendamento, req.horario, req.servico)
         return {"mensagem": "Agendamento realizado com sucesso!"}
     raise HTTPException(status_code=500, detail="Erro ao salvar agendamento.")
@@ -161,7 +161,6 @@ def obter_logo():
     if logo:
         return logo
     raise HTTPException(status_code=404, detail="Logo não encontrada.")    
-
 
 @app.get("/api/contato")
 def obter_contato():
@@ -175,7 +174,6 @@ def obter_contato():
 
 @app.put("/api/agendamentos/status")
 def atualizar_status(req: StatusUpdateRequest):
-    # Ajustado para refletir a assinatura padrão do firebase_config (atualiza pelo doc_id)
     fb.atualizar_status_agendamento(req.doc_id, req.novo_status)
     return {"mensagem": "Status atualizado!"}
 
