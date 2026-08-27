@@ -2,8 +2,9 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
+import pytz
 
 # Importa módulos internos
 import firebase_config as fb
@@ -36,8 +37,43 @@ def listar_dias_disponiveis():
 @app.get("/api/agenda/horarios/{data}")
 def listar_horarios_por_data(data: str):
     agenda = fb.buscar_agenda_disponivel()
-    # Retorna os horários disponíveis daquela data específica
-    return agenda.get(data, [])
+    horarios_salvos = agenda.get(data, [])
+    
+    if not horarios_salvos:
+        return []
+
+    try:
+        # Define o fuso horário oficial de Brasília para evitar divergências com o servidor (Render/Vercel)
+        fuso_br = pytz.timezone("America/Sao_Paulo")
+        agora = datetime.now(fuso_br)
+        hoje_str = agora.strftime("%Y-%m-%d")
+        
+        # Aplica a regra dos 10 minutos apenas se a data consultada for HOJE
+        if data == hoje_str:
+            horarios_filtrados = []
+            for h_str in horarios_salvos:
+                try:
+                    hora_slot, min_slot = map(int, h_str.split(":"))
+                except ValueError:
+                    continue # Pula se houver algum formato inválido
+                
+                # Monta o objeto datetime para o horário do slot no dia de hoje
+                dt_slot = agora.replace(hour=hora_slot, minute=min_slot, second=0, microsecond=0)
+                
+                # Calcula quanto tempo falta para o horário
+                diferenca = dt_slot - agora
+                
+                # Se ainda faltam mais de 10 minutos, o horário continua disponível
+                if diferenca > timedelta(minutes=10):
+                    horarios_filtrados.append(h_str)
+            
+            return horarios_filtrados
+            
+    except Exception as e:
+        print(f"Erro ao filtrar horários por tempo: {e}")
+
+    # Se for para qualquer outro dia futuro, retorna todos os horários normalmente
+    return horarios_salvos
 
 # -------------------------------------------------------------
 # MODELOS DE DADOS (Pydantic)
