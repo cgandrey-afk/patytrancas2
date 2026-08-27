@@ -73,11 +73,12 @@ def listar_horarios_por_data(data: str):
                     continue 
                 
                 dt_slot = agora.replace(hour=hora_slot, minute=min_slot, second=0, microsecond=0)
-                diferenca = dt_slot - agora
                 
-                # Se ainda faltam mais de 10 minutos, o horário continua disponível (caso contrário, é ocultado)
-                if diferenca > timedelta(minutes=10):
-                    horarios_filtrados.append(h_str)
+                # Se o horário já passou OU falta menos de 10 minutos para ele, ele é ignorado (ocultado)
+                if dt_slot < (agora + timedelta(minutes=10)):
+                    continue
+                
+                horarios_filtrados.append(h_str)
             
             return horarios_filtrados
             
