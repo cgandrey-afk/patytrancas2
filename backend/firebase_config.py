@@ -276,25 +276,27 @@ def salvar_agenda(data_str, horarios_trabalho):
         })
 
 def verificar_e_aplicar_corte_10min(data_str: str):
-    """
-    Item 2: Quando alguém abre o site e seleciona a data, 
-    verifica se falta menos de 10 minutos (ou já passou) e move para indisponíveis no DB.
-    """
     fuso_br = pytz.timezone("America/Sao_Paulo")
     agora = datetime.now(fuso_br)
     hoje_str = agora.strftime("%Y-%m-%d")
     
+    print(f"[DEBUG 10MIN] Data consultada: {data_str} | Hoje (Servidor BR): {hoje_str} | Hora atual: {agora.strftime('%H:%M:%S')}")
+    
     if data_str != hoje_str:
+        print("[DEBUG 10MIN] A data consultada não é hoje. Ignorando corte.")
         return
 
     doc_ref = db.collection("agenda").document(data_str)
     doc = doc_ref.get()
     if not doc.exists:
+        print(f"[DEBUG 10MIN] Documento da data {data_str} não encontrado no Firestore.")
         return
         
     dados = doc.to_dict()
     disponiveis = dados.get("horarios_disponiveis", [])
     indisponiveis = dados.get("horarios_indisponiveis", [])
+    
+    print(f"[DEBUG 10MIN] Horários disponíveis antes do corte: {disponiveis}")
     
     houve_alteracao = False
     novos_disponiveis = []
@@ -304,14 +306,21 @@ def verificar_e_aplicar_corte_10min(data_str: str):
             hora_slot, min_slot = map(int, h.split(":"))
             dt_slot = agora.replace(hour=hora_slot, minute=min_slot, second=0, microsecond=0)
             
-            # Se falta menos de 10 minutos ou já passou, joga para indisponível
+            diferenca = dt_slot - agora
+            minutos_restantes = diferenca.total_seconds() / 60
+            
+            print(f"[DEBUG 10MIN] Slot {h} -> Faltam {minutos_restantes:.1f} minutos (dt_slot: {dt_slot} vs agora: {agora})")
+            
+            # Se falta menos de 10 minutos ou já passou
             if dt_slot < (agora + timedelta(minutes=10)):
+                print(f"[DEBUG 10MIN] -> BLOQUEANDO slot {h} (Passou do limite de 10 min)")
                 if h not in indisponiveis:
                     indisponiveis.append(h)
                 houve_alteracao = True
             else:
                 novos_disponiveis.append(h)
-        except ValueError:
+        except Exception as e:
+            print(f"[DEBUG 10MIN] Erro ao processar o slot {h}: {e}")
             novos_disponiveis.append(h)
             
     if houve_alteracao:
@@ -323,6 +332,9 @@ def verificar_e_aplicar_corte_10min(data_str: str):
             "horarios_indisponiveis": indisponiveis,
             "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
         })
+        print("[DEBUG 10MIN] Banco atualizado com sucesso com os horários bloqueados.")
+    else:
+        print("[DEBUG 10MIN] Nenhum horário atingiu o limite de corte nesta execução.")
 
 def mover_horario_para_indisponivel(data_str, horario_inicial, servico):
     """Move todos os blocos de horários (incluindo os de 30min) para indisponíveis"""
@@ -373,17 +385,15 @@ def mover_horario_para_indisponivel(data_str, horario_inicial, servico):
         })
 
 def voltar_horario_para_disponivel(data_str, horario_inicial, servico):
-    """
-    Item 3: Quando um agendamento é cancelado, antes de jogar para disponíveis,
-    verifica se falta menos de 10 minutos para o horário atual. 
-    O que faltar mantém em indisponíveis, o que não, manda para disponível.
-    """
     duracao = obter_duracao_servico(servico)
     horarios_a_liberar = calcular_blocos_horarios(horario_inicial, duracao)
+
+    print(f"[DEBUG CANCELAR] Tentando liberar horários {horarios_a_liberar} para a data {data_str} (Serviço: {servico})")
 
     doc_ref = db.collection("agenda").document(data_str)
     doc = doc_ref.get()
     if not doc.exists:
+        print("[DEBUG CANCELAR] Documento da agenda não existe.")
         return
 
     dados = doc.to_dict()
@@ -399,22 +409,28 @@ def voltar_horario_para_disponivel(data_str, horario_inicial, servico):
         if h in indisponiveis:
             indisponiveis.remove(h)
             
-        # Regra do Item 3: Se for hoje, checa o tempo antes de devolver para disponível
         if data_str == hoje_str:
             try:
                 hora_slot, min_slot = map(int, h.split(":"))
                 dt_slot = agora.replace(hour=hora_slot, minute=min_slot, second=0, microsecond=0)
                 
-                # Se já passou ou falta menos de 10 min, NÃO manda para disponível (joga de volta para indisponível)
+                diferenca = dt_slot - agora
+                minutos_restantes = diferenca.total_seconds() / 60
+                
+                print(f"[DEBUG CANCELAR] Analisando slot liberado {h} -> Faltam {minutos_restantes:.1f} minutos")
+                
+                # Se já passou ou falta menos de 10 min, mantém bloqueado
                 if dt_slot < (agora + timedelta(minutes=10)):
+                    print(f"[DEBUG CANCELAR] -> MANTENDO BLOQUEADO o slot {h} (Já passou ou menos de 10 min)")
                     if h not in indisponiveis:
                         indisponiveis.append(h)
                     continue
-            except ValueError:
-                pass
+            except Exception as e:
+                print(f"[DEBUG CANCELAR] Erro ao validar tempo do slot {h}: {e}")
                 
-        # Se passou na regra de tempo (ou é dia futuro), devolve para os disponíveis se pertencer ao trabalho
+        # Devolve para disponível se passar na regra
         if h not in disponiveis and h in trabalho:
+            print(f"[DEBUG CANCELAR] -> DEVOLVENDO PARA DISPONÍVEL o slot {h}")
             disponiveis.append(h)
             
     disponiveis.sort(key=lambda x: [int(p) for p in x.split(":")])
@@ -425,6 +441,7 @@ def voltar_horario_para_disponivel(data_str, horario_inicial, servico):
         "horarios_indisponiveis": indisponiveis,
         "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
     })
+    print("[DEBUG CANCELAR] Atualização de cancelamento concluída no DB.")
 
 def deletar_agenda(data_str):
     db.collection("agenda").document(data_str).delete()
