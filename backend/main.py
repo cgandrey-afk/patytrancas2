@@ -30,40 +30,48 @@ app.add_middleware(
 
 @app.get("/api/agenda/dias")
 def listar_dias_disponiveis(servico: Optional[str] = None):
-    # TRAVA OBRIGATÓRIA: Se o serviço não foi selecionado, não retorna nenhum dia
+    print(f"[DEBUG ROTA DIAS] Serviço recebido via query string: '{servico}'")
+    
     if not servico:
+        print("[DEBUG ROTA DIAS] Serviço não informado. Retornando lista vazia.")
         return []
 
     agenda = fb.buscar_agenda_disponivel()
     if not isinstance(agenda, dict):
+        print("[DEBUG ROTA DIAS] Agenda retornada não é um dicionário.")
         return []
     
     fuso_br = pytz.timezone("America/Sao_Paulo")
     hoje_str = datetime.now(fuso_br).strftime("%Y-%m-%d")
     
-    # Pega a duração em horas baseada na função inteligente do firebase_config
     duracao_horas = fb.obtener_duracao_servico(servico)
+    print(f"[DEBUG ROTA DIAS] Duração calculada para '{servico}': {duracao_horas} horas")
     
     dias_validos = []
     for data, horarios in agenda.items():
         if data < hoje_str:
             continue
             
-        # Só adiciona o dia se ele tiver espaço contínuo suficiente para o serviço
-        if fb.tem_espaco_consecutivo(horarios, duracao_horas):
+        tem_espaco = fb.tem_espaco_consecutivo(horarios, duracao_horas)
+        print(f"[DEBUG ROTA DIAS] Data {data} tem espaço suficiente? {tem_espaco} (Horários livres: {horarios})")
+        
+        if tem_espaco:
             dias_validos.append(data)
             
     dias_validos.sort()
+    print(f"[DEBUG ROTA DIAS] Dias válidos finais: {dias_validos}")
     return dias_validos
 
 @app.get("/api/agenda/horarios/{data}")
 def listar_horarios_por_data(data: str, servico: Optional[str] = None):
+    print(f"[DEBUG ROTA HORARIOS] Data: {data} | Serviço: '{servico}'")
+    
     fuso_br = pytz.timezone("America/Sao_Paulo")
     agora = datetime.now(fuso_br)
     hoje_str = agora.strftime("%Y-%m-%d")
     
-    # Bloqueia se a data passou ou se o serviço não foi informado
     if data < hoje_str or not servico:
+        print(f"[DEBUG ROTA HORARIOS] Bloqueado por data passada ({data < hoje_str}) ou falta de serviço ({not servico})")
         return []
 
     if data == hoje_str:
@@ -71,12 +79,12 @@ def listar_horarios_por_data(data: str, servico: Optional[str] = None):
 
     agenda = fb.buscar_agenda_disponivel()
     horarios_salvos = agenda.get(data, [])
+    print(f"[DEBUG ROTA HORARIOS] Horários salvos brutos no banco para {data}: {horarios_salvos}")
     
     duracao_horas = fb.obtener_duracao_servico(servico)
-    
-    # Filtra para retornar apenas os horários iniciais que dão a sequência correta
     horarios_validos = fb.filtrar_horarios_iniciais_sequenciais(horarios_salvos, duracao_horas)
     
+    print(f"[DEBUG ROTA HORARIOS] Horários finais devolvidos: {horarios_validos}")
     return horarios_validos
 
 # -------------------------------------------------------------

@@ -547,27 +547,26 @@ def solicitar_reagendamento_db(user_id: str, doc_id: str, status_atual: str, nov
         return None
         
 def filtrar_horarios_iniciais_sequenciais(horarios_disponiveis: list, duracao_horas: float):
-    """
-    Filtra os horários disponíveis retornando apenas os horários iniciais 
-    que possuem espaço sequencial suficiente para cobrir a duração do serviço.
-    """
+    print(f"[DEBUG FILTRO] Horários disponíveis recebidos: {horarios_disponiveis} | Duração necessária (horas): {duracao_horas}")
     if not horarios_disponiveis:
+        print("[DEBUG FILTRO] Lista de horários disponíveis vazia!")
         return []
         
     slots_validos = []
     for i in range(len(horarios_disponiveis)):
         horario_inicio = horarios_disponiveis[i]
-        # Gera todos os blocos necessários a partir deste horário
         blocos_necessarios = calcular_blocos_horarios(horario_inicio, duracao_horas)
         
-        # Verifica se TODOS os blocos necessários existem na lista de disponíveis
+        # Verifica se todos os blocos necessários estão na lista
         todos_presentes = all(b in horarios_disponiveis for b in blocos_necessarios)
+        print(f"[DEBUG FILTRO] Início: {horario_inicio} exige os blocos {blocos_necessarios} -> Todos presentes? {todos_presentes}")
         
         if todos_presentes:
             slots_validos.append(horario_inicio)
             
+    print(f"[DEBUG FILTRO] Slots finais válidos: {slots_validos}")
     return slots_validos
 
 def tem_espaco_consecutivo(horarios_disponiveis: list, duracao_horas: float):
-    """Retorna True se o dia possui pelo menos um bloco inicial válido para o serviço."""
-    return len(filtrar_horarios_iniciais_sequenciais(horarios_disponiveis, duracao_horas)) > 0
+    resultado = len(filtrar_horarios_iniciais_sequenciais(horarios_disponiveis, duracao_horas)) > 0
+    return resultado
