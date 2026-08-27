@@ -60,14 +60,20 @@ def listar_dias_disponiveis(servico: Optional[str] = None):
 
 @app.get("/api/agenda/horarios/{data}")
 def listar_horarios_por_data(data: str, servico: Optional[str] = None):
-    print(f"[DEBUG ROTA HORARIOS] Data: {data} | Serviço: '{servico}'")
+    # Trata caso o serviço venha como string 'None', vazio ou nulo real
+    if not servico or servico.lower() == 'none' or servico.strip() == '':
+        print(f"[DEBUG ROTA HORARIOS] Serviço não informado ou 'None'. Assumindo duração padrão de 1.0h.")
+        servico = None
+    
+    print(f"[DEBUG ROTA HORARIOS] Data: {data} | Serviço tratado: '{servico}'")
     
     fuso_br = pytz.timezone("America/Sao_Paulo")
     agora = datetime.now(fuso_br)
     hoje_str = agora.strftime("%Y-%m-%d")
     
-    if data < hoje_str or not servico:
-        print(f"[DEBUG ROTA HORARIOS] Bloqueado por data passada ({data < hoje_str}) ou falta de serviço ({not servico})")
+    # Bloqueia apenas se for uma data passada
+    if data < hoje_str:
+        print(f"[DEBUG ROTA HORARIOS] Bloqueado por data passada ({data < hoje_str})")
         return []
 
     if data == hoje_str:
@@ -77,7 +83,8 @@ def listar_horarios_por_data(data: str, servico: Optional[str] = None):
     horarios_salvos = agenda.get(data, [])
     print(f"[DEBUG ROTA HORARIOS] Horários salvos brutos no banco para {data}: {horarios_salvos}")
     
-    duracao_horas = fb.obtener_duracao_servico(servico)
+    # Se o serviço for None, usa 1 hora como padrão para calcular os blocos
+    duracao_horas = fb.obtener_duracao_servico(servico) if servico else 1.0
     horarios_validos = fb.filtrar_horarios_iniciais_sequenciais(horarios_salvos, duracao_horas)
     
     print(f"[DEBUG ROTA HORARIOS] Horários finais devolvidos: {horarios_validos}")
