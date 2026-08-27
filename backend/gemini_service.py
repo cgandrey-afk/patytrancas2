@@ -20,11 +20,11 @@ def analisar_imagem_com_gemini(bytes_imagem, observacao_cliente: str = ""):
         if observacao_cliente and observacao_cliente.strip():
             instrucao_cliente = f"""
             ATENÇÃO OBRIGATÓRIA À OBSERVAÇÃO DO CLIENTE: "{observacao_cliente}"
-            - Você DEVE adaptar obrigatoriamente a sua análise baseada neste pedido. 
-            - Se o cliente pediu para remover algo (ex: "sem acessórios", "menos tranças"), você NÃO deve considerar esses elementos, deve recalcular/reduzir o tempo estimado em relação ao que aparece visualmente na foto, e o campo "observacao" DEVE obrigatoriamente iniciar explicando como este pedido alterou a execução do penteado.
+            - Se o pedido remove algo que gasta tempo (como acessórios, fitas ou anéis), reduza o tempo estimado de forma realista (por exemplo, remover acessórios economiza cerca de 15 a 20 minutos no total, nunca exagere na redução). 
+            - O campo "observacao" DEVE iniciar explicando como o pedido alterou o tempo e a execução.
             """
         else:
-            instrucao_cliente = "Analise a imagem normalmente considerando o que é visto."
+            instrucao_cliente = "Analise a imagem normalmente."
 
         prompt = f"""
         Você é uma trancista profissional e especialista em penteados afro e nagô.
