@@ -501,17 +501,31 @@ def cancelar_agendamento_db(user_id: str, doc_id: str, status_atual: str):
             horario = d.get("horario")
             servico = d.get("servico")
 
+        # Em vez de deletar, agora mudamos o status para 'Cancelado' e liberamos o horário
         if status_atual == "Pendente":
-            doc_ref.delete()
+            fuso_br = pytz.timezone("America/Sao_Paulo")
+            agora_str = datetime.now(fuso_br).strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Atualiza para cancelado mantendo no histórico do cliente
+            doc_ref.update({
+                "status": "Cancelado",
+                "status_cancelamento": "Aprovado",
+                "cancelado_em": agora_str
+            })
+            
+            # Devolve o horário para a agenda pública
             if data_agend and horario and servico:
                 voltar_horario_para_disponivel(data_agend, horario, servico)
-            return {"acao": "deletado", "mensagem": "Agendamento cancelado e removido."}
+                
+            return {"acao": "cancelado", "mensagem": "Agendamento cancelado com sucesso e mantido no histórico."}
         else:
+            # Caso seja um agendamento já confirmado que o cliente pediu para cancelar
             doc_ref.update({
                 "pedido_cancelamento": True,
                 "status_cancelamento": "Pendente"
             })
             return {"acao": "solicitado", "mensagem": "Solicitação de cancelamento enviada à administração."}
+            
     except Exception as e:
         print(f"Erro ao cancelar agendamento: {e}")
         return None
