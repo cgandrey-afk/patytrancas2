@@ -58,7 +58,8 @@ def carregar_servicos():
         return []
 
 def obter_duracao_servico(nome_servico: str):
-    """Busca a duração do serviço e retorna em formato de horas (ex: 0.5 para 30min, 1.5 para 1h30, 3 para 3h)"""
+    """Busca a duração exata do serviço com segurança contra textos e números embutidos."""
+    print(f"[DEBUG SERVIÇO] Buscando duração para o serviço: '{nome_servico}'")
     try:
         doc = db.collection("servicos").document(nome_servico).get()
         dados = {}
@@ -72,36 +73,33 @@ def obter_duracao_servico(nome_servico: str):
                     dados = d
                     break
 
-        texto_tempo = dados.get("tempo_fazer") or dados.get("duracao_horas")
-        
-        if texto_tempo:
-            # Se já for número direto
+        # Tenta buscar especificamente campos numéricos ou descritivos de tempo
+        texto_tempo = dados.get("duracao_horas") or dados.get("tempo_fazer")
+        print(f"[DEBUG SERVIÇO] Dados brutos do serviço: {dados} | Tempo identificado: {texto_tempo}")
+
+        if texto_tempo is not None:
             if isinstance(texto_tempo, (int, float)):
                 return float(texto_tempo)
             
             texto_str = str(texto_tempo).lower()
-            
-            # Se explicitamente disser 30 min ou meia hora
             if "30" in texto_str or "meia" in texto_str:
                 return 0.5
             
-            # Procura por padrões como 1:30, 2:30
             match_horas_minutos = re.search(r'(\d+):([30]+)', texto_str)
             if match_horas_minutos:
                 h = int(match_horas_minutos.group(1))
                 m = int(match_horas_minutos.group(2))
-                if m == 30:
-                    return h + 0.5
-                return float(h)
+                return h + (0.5 if m == 30 else 0.0)
 
-            # Extrai todos os números do texto
-            numeros = re.findall(r'\d+', texto_str)
-            if numeros:
-                return float(numeros[0]) # Retorna o primeiro número encontrado (ex: 3)
-                
-        return 1.0 # Padrão 1 hora se não achar nada
+            # Procura apenas se houver menção explícita de horas no texto para evitar pegar números do nome
+            match_h = re.search(r'(\d+)\s*(?:h|hora|hr)', texto_str)
+            if match_h:
+                return float(match_h.group(1))
+
+        print("[DEBUG SERVIÇO] Nenhum tempo válido encontrado, assumindo padrão de 1.0 hora.")
+        return 1.0 
     except Exception as e:
-        print(f"Erro ao buscar duração do serviço: {e}")
+        print(f"[DEBUG SERVIÇO] Erro ao buscar duração do serviço: {e}")
         return 1.0
 
 def calcular_blocos_horarios(horario_inicial: str, duracao_horas: float):
