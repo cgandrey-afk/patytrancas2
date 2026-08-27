@@ -29,42 +29,55 @@ app.add_middleware(
 )
 
 @app.get("/api/agenda/dias")
-def listar_dias_disponiveis():
+def listar_dias_disponiveis(servico: Optional[str] = None):
+    # TRAVA OBRIGATÓRIA: Se o serviço não foi selecionado, não retorna nenhum dia
+    if not servico:
+        return []
+
     agenda = fb.buscar_agenda_disponivel()
     if not isinstance(agenda, dict):
         return []
     
-    # Define o fuso horário oficial de Brasília para comparar corretamente a data de hoje
     fuso_br = pytz.timezone("America/Sao_Paulo")
     hoje_str = datetime.now(fuso_br).strftime("%Y-%m-%d")
     
-    # Filtra apenas as datas que são DE HOJE em diante (remove datas passadas)
-    dias_futuros_e_hoje = [data for data in agenda.keys() if data >= hoje_str]
+    # Pega a duração em horas baseada na função inteligente do firebase_config
+    duracao_horas = fb.obtener_duracao_servico(servico)
     
-    # Ordena as datas cronologicamente
-    dias_futuros_e_hoje.sort()
-    
-    return dias_futuros_e_hoje
-    
+    dias_validos = []
+    for data, horarios in agenda.items():
+        if data < hoje_str:
+            continue
+            
+        # Só adiciona o dia se ele tiver espaço contínuo suficiente para o serviço
+        if fb.tem_espaco_consecutivo(horarios, duracao_horas):
+            dias_validos.append(data)
+            
+    dias_validos.sort()
+    return dias_validos
+
 @app.get("/api/agenda/horarios/{data}")
-def listar_horarios_por_data(data: str):
+def listar_horarios_por_data(data: str, servico: Optional[str] = None):
     fuso_br = pytz.timezone("America/Sao_Paulo")
     agora = datetime.now(fuso_br)
     hoje_str = agora.strftime("%Y-%m-%d")
     
-    # Bloqueia se a pessoa tentar consultar uma data que já passou
-    if data < hoje_str:
+    # Bloqueia se a data passou ou se o serviço não foi informado
+    if data < hoje_str or not servico:
         return []
 
-    # ITEM 2: Quando o usuário abre a data, a API roda a verificação e atualiza o DB se faltar 10min
     if data == hoje_str:
         fb.verificar_e_aplicar_corte_10min(data)
 
-    # Busca a agenda atualizada do banco e retorna os horários disponíveis limpos
     agenda = fb.buscar_agenda_disponivel()
     horarios_salvos = agenda.get(data, [])
     
-    return horarios_salvos
+    duracao_horas = fb.obtener_duracao_servico(servico)
+    
+    # Filtra para retornar apenas os horários iniciais que dão a sequência correta
+    horarios_validos = fb.filtrar_horarios_iniciais_sequenciais(horarios_salvos, duracao_horas)
+    
+    return horarios_validos
 
 # -------------------------------------------------------------
 # MODELOS DE DADOS (Pydantic)
