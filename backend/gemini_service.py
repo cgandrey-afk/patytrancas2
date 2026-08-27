@@ -40,7 +40,7 @@ def analisar_imagem_com_gemini(bytes_imagem, observacao_cliente: str = ""):
         """
 
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.6-flash",
             contents=[prompt, imagem_pil]
         )
 
