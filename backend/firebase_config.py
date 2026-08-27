@@ -551,13 +551,34 @@ def filtrar_horarios_iniciais_sequenciais(horarios_disponiveis: list, duracao_ho
         return []
         
     slots_validos = []
+    
+    # Converte os horários disponíveis em minutos desde a meia-noite para facilitar a checagem matemática de sequência contínua
+    def para_minutos(h_str):
+        p = h_str.split(":")
+        return int(p[0]) * 60 + int(p[1])
+    
+    # Cria um set para busca rápida O(1)
+    set_disponiveis = set(horarios_disponiveis)
+    
     for i in range(len(horarios_disponiveis)):
         horario_inicio = horarios_disponiveis[i]
         blocos_necessarios = calcular_blocos_horarios(horario_inicio, duracao_horas)
         
-        # Verifica se todos os blocos necessários estão na lista
-        todos_presentes = all(b in horarios_disponiveis for b in blocos_necessarios)
-        print(f"[DEBUG FILTRO] Início: {horario_inicio} exige os blocos {blocos_necessarios} -> Todos presentes? {todos_presentes}")
+        # Validação ultra-robusta: verifica se cada bloco existe e se a sequência é consecutiva de 30 em 30 min exatos
+        todos_presentes = True
+        minuto_anterior = None
+        
+        for b in blocos_necessarios:
+            if b not in set_disponiveis:
+                todos_presentes = False
+                break
+            min_atual = para_minutos(b)
+            if minuto_anterior is not None and min_atual - minuto_anterior != 30:
+                todos_presentes = False
+                break
+            minuto_anterior = min_atual
+
+        print(f"[DEBUG FILTRO] Início: {horario_inicio} exige os blocos {blocos_necessarios} -> Todos presentes e sequenciais? {todos_presentes}")
         
         if todos_presentes:
             slots_validos.append(horario_inicio)
