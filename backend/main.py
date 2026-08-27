@@ -232,12 +232,17 @@ def deletar_agenda_data(data_str: str):
 
 # --- ANÁLISE COM GEMINI IA ---
 @app.post("/api/analisar-ia")
-async def analisar_penteado(foto: UploadFile = File(...)):
+async def analisar_penteado(
+    foto: UploadFile = File(...),
+    observacao: Optional[str] = Form(default="") # Captura a observação opcional digitada
+):
     if not foto.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Arquivo enviado não é uma imagem válida.")
     
     bytes_imagem = await foto.read()
-    resultado = gemini.analisar_imagem_com_gemini(bytes_imagem)
+    
+    # Repassa a observação junto com os bytes da imagem para o módulo do gemini
+    resultado = gemini.analisar_imagem_com_gemini(bytes_imagem, observacao_cliente=observacao)
     
     if resultado:
         return resultado

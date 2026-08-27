@@ -94,6 +94,12 @@
           <img id="imgPreview" src="" alt="Pré-visualização">
         </div>
 
+        <!-- ADICIONE O CAMPO DE OBSERVAÇÃO LOGO ABAIXO -->
+        <div class="form-group" style="margin-top: 15px;">
+          <label for="observacaoIA">Observação / Alteração desejada (Opcional):</label>
+          <input type="text" id="observacaoIA" placeholder="Ex: Quero esse modelo só que com menos tranças, ou adicionar acessórios..." style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: white;">
+        </div>
+
         <button class="btn-primary btn-full" onclick="analisarFoto()">🔍 Analisar com Gemini IA</button>
 
         <div id="resultadoIA" class="resultado-ia-card" style="display: none;"></div>

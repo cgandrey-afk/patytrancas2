@@ -175,6 +175,10 @@ function previewFoto(event) {
 
 async function analisarFoto() {
   const fileInput = document.getElementById('fotoInput');
+  // Se você criou um campo de input/textarea para observação no HTML, pegue o valor dele aqui:
+  const inputObservacao = document.getElementById('observacaoIA'); // Ajuste o ID conforme o HTML do seu input
+  const observacaoTexto = inputObservacao ? inputObservacao.value : '';
+
   const divResultado = document.getElementById('resultadoIA');
 
   if (!fileInput.files[0]) {
@@ -187,6 +191,7 @@ async function analisarFoto() {
 
   const formData = new FormData();
   formData.append("foto", fileInput.files[0]);
+  formData.append("observacao", observacaoTexto); // Envia a observação opcional para o backend
 
   try {
     const res = await fetch(`${API_URL}/api/analisar-ia`, { method: "POST", body: formData });
@@ -196,12 +201,12 @@ async function analisarFoto() {
       divResultado.innerHTML = `
         <h3 style="color:#c25975; margin-bottom:10px;">✨ Análise Concluída</h3>
         <p><strong>Estilo Identificado:</strong> ${data.estilo_identificado || 'Não especificado'}</p>
-        <p><strong>Dificuldade:</strong> ${data.dificuldade || 'Média'}</p>
+        <p><strong>Dificuldade:</strong> ${data.dificuldade || data.Complexidade || 'Média'}</p>
         <p><strong>Tempo Estimado:</strong> ${data.tempo_estimado_minutos || '--'} minutos</p>
         <p style="margin-top:8px;"><strong>Observação:</strong> ${data.observacao || 'Nenhuma observação.'}</p>
       `;
     } else {
-      divResultado.innerHTML = "<p style='color:#ef4444;'>❌ Ocorreu um erro ao processar a imagem no servidor.</p>";
+      divResultado.innerHTML = `<p style='color:#ef4444;'>❌ ${data.detail || 'Ocorreu um erro ao processar a imagem no servidor.'}</p>`;
     }
   } catch (err) {
     divResultado.innerHTML = "<p style='color:#ef4444;'>❌ Erro ao conectar com o serviço de IA.</p>";
