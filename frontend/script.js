@@ -490,31 +490,52 @@ function fecharModalLocalizacao(e, forcar = false) {
 }
 
 // APENAS UMA VERSÃO LIMPA E CORRETA DA INICIALIZAÇÃO DO CALENDÁRIO
+let instanciaFlatpickr = null;
+
 async function inicializarCalendario() {
   const inputData = document.getElementById('data');
+  const selectServico = document.getElementById('servico');
   const selectHorarios = document.getElementById('horario');
   
   if (!inputData || typeof flatpickr === 'undefined') return;
 
   try {
-    const resposta = await fetch(`${API_URL}/api/agenda/dias`);
+    // Busca inicial de dias (sem serviço ou com o atual)
+    const servicoAtual = selectServico ? selectServico.value : '';
+    const urlDias = servicoAtual ? `${API_URL}/api/agenda/dias?servico=${encodeURIComponent(servicoAtual)}` : `${API_URL}/api/agenda/dias`;
+    
+    const resposta = await fetch(urlDias);
     let diasPermitidos = [];
     
     if (resposta.ok) {
       diasPermitidos = await resposta.json();
     }
 
-    flatpickr(inputData, {
+    if (instanciaFlatpickr) {
+      instanciaFlatpickr.destroy();
+    }
+
+    instanciaFlatpickr = flatpickr(inputData, {
       locale: "pt",
       dateFormat: "Y-m-d",
       minDate: "today",
       enable: diasPermitidos,
+      // 🔒 TRAVA DE SEGURANÇA ANTES DE ABRIR O CALENDÁRIO
+      onOpen: function(selectedDates, dateStr, instance) {
+        const servicoSelecionado = selectServico ? selectServico.value : '';
+        if (!servicoSelecionado || servicoSelecionado === "None" || servicoSelecionado.trim() === "") {
+          instance.close(); // Fecha o calendário imediatamente
+          alert("⚠️ Por favor, selecione um serviço primeiro antes de escolher a data!");
+          if (selectServico) selectServico.focus();
+        }
+      },
       onChange: async function(selectedDates, dateStr, instance) {
         if (!dateStr) {
           limparHorarios();
           return;
         }
-        await carregarHorariosDisponiveis(dateStr);
+        const servicoSelecionado = selectServico ? selectServico.value : '';
+        await carregarHorariosDisponiveis(dateStr, servicoSelecionado);
       }
     });
 
@@ -535,14 +556,18 @@ async function inicializarCalendario() {
 }
 
 // Função para buscar e renderizar os horários do dia selecionado
-async function carregarHorariosDisponiveis(dataStr) {
+async function carregarHorariosDisponiveis(dataStr, servico = '') {
   const selectHorarios = document.getElementById('horario');
   if (!selectHorarios) return;
 
   selectHorarios.innerHTML = '<option value="">Carregando horários...</option>';
 
   try {
-    const resposta = await fetch(`${API_URL}/api/agenda/horarios/${dataStr}`);
+    const urlHorarios = servico 
+      ? `${API_URL}/api/agenda/horarios/${dataStr}?servico=${encodeURIComponent(servico)}`
+      : `${API_URL}/api/agenda/horarios/${dataStr}`;
+
+    const resposta = await fetch(urlHorarios);
     if (!resposta.ok) throw new Error("Erro ao buscar horários");
 
     const horarios = await resposta.json();
@@ -584,4 +609,15 @@ document.addEventListener("DOMContentLoaded", () => {
   carregarAgendamentos();
   carregarContato(); 
   inicializarCalendario(); 
+
+  // NOVO: Quando o usuário trocar o serviço no select, reinicia o calendário e limpa data/horário
+  const selectServico = document.getElementById('servico');
+  if (selectServico) {
+    selectServico.addEventListener('change', () => {
+      const inputData = document.getElementById('data');
+      if (inputData) inputData.value = ''; // Limpa a data escolhida anteriormente
+      limparHorarios();
+      inicializarCalendario(); // Recarrega os dias disponíveis com base no novo serviço
+    });
+  }
 });
