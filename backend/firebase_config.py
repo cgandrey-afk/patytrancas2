@@ -275,6 +275,55 @@ def salvar_agenda(data_str, horarios_trabalho):
             "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
         })
 
+def verificar_e_aplicar_corte_10min(data_str: str):
+    """
+    Item 2: Quando alguém abre o site e seleciona a data, 
+    verifica se falta menos de 10 minutos (ou já passou) e move para indisponíveis no DB.
+    """
+    fuso_br = pytz.timezone("America/Sao_Paulo")
+    agora = datetime.now(fuso_br)
+    hoje_str = agora.strftime("%Y-%m-%d")
+    
+    if data_str != hoje_str:
+        return
+
+    doc_ref = db.collection("agenda").document(data_str)
+    doc = doc_ref.get()
+    if not doc.exists:
+        return
+        
+    dados = doc.to_dict()
+    disponiveis = dados.get("horarios_disponiveis", [])
+    indisponiveis = dados.get("horarios_indisponiveis", [])
+    
+    houve_alteracao = False
+    novos_disponiveis = []
+    
+    for h in disponiveis:
+        try:
+            hora_slot, min_slot = map(int, h.split(":"))
+            dt_slot = agora.replace(hour=hora_slot, minute=min_slot, second=0, microsecond=0)
+            
+            # Se falta menos de 10 minutos ou já passou, joga para indisponível
+            if dt_slot < (agora + timedelta(minutes=10)):
+                if h not in indisponiveis:
+                    indisponiveis.append(h)
+                houve_alteracao = True
+            else:
+                novos_disponiveis.append(h)
+        except ValueError:
+            novos_disponiveis.append(h)
+            
+    if houve_alteracao:
+        novos_disponiveis.sort(key=lambda x: [int(p) for p in x.split(":")])
+        indisponiveis.sort(key=lambda x: [int(p) for p in x.split(":")])
+        
+        doc_ref.update({
+            "horarios_disponiveis": novos_disponiveis,
+            "horarios_indisponiveis": indisponiveis,
+            "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
+        })
+
 def mover_horario_para_indisponivel(data_str, horario_inicial, servico):
     """Move todos os blocos de horários (incluindo os de 30min) para indisponíveis"""
     duracao = obter_duracao_servico(servico)
@@ -303,12 +352,11 @@ def mover_horario_para_indisponivel(data_str, horario_inicial, servico):
         if data_str == data_hoje:
             novos_disponiveis = []
             for h in disponiveis:
-                hora_slot = datetime.strptime(h, "%H:%M").time()
-                data_hora_slot = fuso_br.localize(datetime.combine(agora.date(), hora_slot))
+                hora_slot, min_slot = map(int, h.split(":"))
+                dt_slot = agora.replace(hour=hora_slot, minute=min_slot, second=0, microsecond=0)
                 
                 # Se faltar menos de 10 minutos ou já passou, joga para indisponível
-                diferenca = data_hora_slot - agora
-                if diferenca.total_seconds() < (10 * 60):
+                if dt_slot < (agora + timedelta(minutes=10)):
                     if h not in indisponiveis:
                         indisponiveis.append(h)
                 else:
@@ -325,32 +373,58 @@ def mover_horario_para_indisponivel(data_str, horario_inicial, servico):
         })
 
 def voltar_horario_para_disponivel(data_str, horario_inicial, servico):
-    """Devolve todos os blocos de horários de volta para os disponíveis"""
+    """
+    Item 3: Quando um agendamento é cancelado, antes de jogar para disponíveis,
+    verifica se falta menos de 10 minutos para o horário atual. 
+    O que faltar mantém em indisponíveis, o que não, manda para disponível.
+    """
     duracao = obter_duracao_servico(servico)
     horarios_a_liberar = calcular_blocos_horarios(horario_inicial, duracao)
 
     doc_ref = db.collection("agenda").document(data_str)
     doc = doc_ref.get()
-    if doc.exists:
-        dados = doc.to_dict()
-        disponiveis = dados.get("horarios_disponiveis", [])
-        indisponiveis = dados.get("horarios_indisponiveis", [])
-        trabalho = dados.get("horarios_de_trabalho", [])
-        
-        for h in horarios_a_liberar:
-            if h in indisponiveis:
-                indisponiveis.remove(h)
-            if h not in disponiveis and h in trabalho:
-                disponiveis.append(h)
-                
-        disponiveis.sort(key=lambda x: [int(p) for p in x.split(":")])
-        indisponiveis.sort(key=lambda x: [int(p) for p in x.split(":")])
+    if not doc.exists:
+        return
+
+    dados = doc.to_dict()
+    disponiveis = dados.get("horarios_disponiveis", [])
+    indisponiveis = dados.get("horarios_indisponiveis", [])
+    trabalho = dados.get("horarios_de_trabalho", [])
+    
+    fuso_br = pytz.timezone("America/Sao_Paulo")
+    agora = datetime.now(fuso_br)
+    hoje_str = agora.strftime("%Y-%m-%d")
+
+    for h in horarios_a_liberar:
+        if h in indisponiveis:
+            indisponiveis.remove(h)
             
-        doc_ref.update({
-            "horarios_disponiveis": disponiveis,
-            "horarios_indisponiveis": indisponiveis,
-            "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
-        })
+        # Regra do Item 3: Se for hoje, checa o tempo antes de devolver para disponível
+        if data_str == hoje_str:
+            try:
+                hora_slot, min_slot = map(int, h.split(":"))
+                dt_slot = agora.replace(hour=hora_slot, minute=min_slot, second=0, microsecond=0)
+                
+                # Se já passou ou falta menos de 10 min, NÃO manda para disponível (joga de volta para indisponível)
+                if dt_slot < (agora + timedelta(minutes=10)):
+                    if h not in indisponiveis:
+                        indisponiveis.append(h)
+                    continue
+            except ValueError:
+                pass
+                
+        # Se passou na regra de tempo (ou é dia futuro), devolve para os disponíveis se pertencer ao trabalho
+        if h not in disponiveis and h in trabalho:
+            disponiveis.append(h)
+            
+    disponiveis.sort(key=lambda x: [int(p) for p in x.split(":")])
+    indisponiveis.sort(key=lambda x: [int(p) for p in x.split(":")])
+        
+    doc_ref.update({
+        "horarios_disponiveis": disponiveis,
+        "horarios_indisponiveis": indisponiveis,
+        "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
+    })
 
 def deletar_agenda(data_str):
     db.collection("agenda").document(data_str).delete()

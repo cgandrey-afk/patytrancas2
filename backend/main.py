@@ -48,44 +48,22 @@ def listar_dias_disponiveis():
     
 @app.get("/api/agenda/horarios/{data}")
 def listar_horarios_por_data(data: str):
+    fuso_br = pytz.timezone("America/Sao_Paulo")
+    agora = datetime.now(fuso_br)
+    hoje_str = agora.strftime("%Y-%m-%d")
+    
+    # Bloqueia se a pessoa tentar consultar uma data que já passou
+    if data < hoje_str:
+        return []
+
+    # ITEM 2: Quando o usuário abre a data, a API roda a verificação e atualiza o DB se faltar 10min
+    if data == hoje_str:
+        fb.verificar_e_aplicar_corte_10min(data)
+
+    # Busca a agenda atualizada do banco e retorna os horários disponíveis limpos
     agenda = fb.buscar_agenda_disponivel()
     horarios_salvos = agenda.get(data, [])
     
-    if not horarios_salvos:
-        return []
-
-    try:
-        fuso_br = pytz.timezone("America/Sao_Paulo")
-        agora = datetime.now(fuso_br)
-        hoje_str = agora.strftime("%Y-%m-%d")
-        
-        # Bloqueia se a pessoa tentar consultar uma data que já passou
-        if data < hoje_str:
-            return []
-        
-        # Aplica a regra dos 10 minutos apenas se a data consultada for HOJE
-        if data == hoje_str:
-            horarios_filtrados = []
-            for h_str in horarios_salvos:
-                try:
-                    hora_slot, min_slot = map(int, h_str.split(":"))
-                except ValueError:
-                    continue 
-                
-                dt_slot = agora.replace(hour=hora_slot, minute=min_slot, second=0, microsecond=0)
-                
-                # Se o horário já passou OU falta menos de 10 minutos para ele, ele é ignorado (ocultado)
-                if dt_slot < (agora + timedelta(minutes=10)):
-                    continue
-                
-                horarios_filtrados.append(h_str)
-            
-            return horarios_filtrados
-            
-    except Exception as e:
-        print(f"Erro ao filtrar horários por tempo: {e}")
-
-    # Se for para qualquer outro dia futuro, retorna todos os horários livres normalmente
     return horarios_salvos
 
 # -------------------------------------------------------------
