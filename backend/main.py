@@ -112,7 +112,11 @@ def obter_banners():
 # --- AGENDAMENTOS (Agora por Usuário) ---
 @app.get("/api/agendamentos/{user_id}")
 def listar_agendamentos(user_id: str):
-    return fb.carregar_agendamentos(user_id)
+    agendamentos = fb.carregar_agendamentos(user_id)
+    if isinstance(agendamentos, list):
+        # Filtra para remover da tela do cliente os agendamentos que estão cancelados
+        return [ag for ag in agendamentos if ag.get("status") != "Cancelado"]
+    return agendamentos
     
 @app.get("/api/servicos")
 def listar_servicos():
