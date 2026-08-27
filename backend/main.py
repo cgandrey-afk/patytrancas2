@@ -55,7 +55,7 @@ def listar_dias_disponiveis(servico: Optional[str] = None):
                 dias_validos.append(data)
         else:
             # Se tem serviço, aplica a regra de espaço consecutivo baseado na duração
-            duracao_horas = fb.obtener_duracao_servico(servico)
+            duracao_horas = fb.obter_duracao_servico(servico)
             if fb.tem_espaco_consecutivo(horarios, duracao_horas):
                 dias_validos.append(data)
             
@@ -94,7 +94,7 @@ def listar_horarios_por_data(data: str, servico: Optional[str] = None):
         return horarios_salvos
 
     # Se o serviço foi escolhido, aplica o filtro de blocos sequenciais
-    duracao_horas = fb.obtener_duracao_servico(servico)
+    duracao_horas = fb.obter_duracao_servico(servico)
     horarios_validos = fb.filtrar_horarios_iniciais_sequenciais(horarios_salvos, duracao_horas)
     
     print(f"[DEBUG ROTA HORARIOS] Horários finais devolvidos: {horarios_validos}")
