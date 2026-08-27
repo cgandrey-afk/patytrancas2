@@ -19,23 +19,27 @@ def analisar_imagem_com_gemini(bytes_imagem, observacao_cliente: str = ""):
         # Bloco de instrução condicional forte caso o cliente tenha digitado algo
         if observacao_cliente and observacao_cliente.strip():
             instrucao_cliente = f"""
-            ATENÇÃO OBRIGATÓRIA À OBSERVAÇÃO DO CLIENTE: "{observacao_cliente}"
-            - Se o pedido remove algo que gasta tempo (como acessórios, fitas ou anéis), reduza o tempo estimado de forma realista (por exemplo, remover acessórios economiza cerca de 15 a 20 minutos no total, nunca exagere na redução). 
-            - O campo "observacao" DEVE iniciar explicando como o pedido alterou o tempo e a execução.
+            PEDIDO DO CLIENTE: "{observacao_cliente}"
+            
+            SIGA ESTE PASSO A PASSO OBRIGATÓRIO PARA O CÁLCULO:
+            1. PASSO 1: Analise a imagem original e determine o tempo base que o penteado levaria completo (incluindo o que a foto mostra).
+            2. PASSO 2: Leia a observação do cliente e veja o que deve ser retirado ou adicionado (ex: remover acessórios, fitas ou anéis economiza em média 15 a 20 minutos).
+            3. PASSO 3: Faça a conta matemática exata (Tempo Base da Foto + Adição ou - Subtração) para definir o "tempo_estimado_minutos" final.
+            4. No campo "observacao", comece citando o pedido do cliente e explique claramente a conta feita (ex: "Considerando o tempo base da foto de 90 minutos, com a remoção dos acessórios subtraímos 20 minutos, totalizando 70 minutos...").
             """
         else:
-            instrucao_cliente = "Analise a imagem normalmente."
+            instrucao_cliente = "Analise a imagem normalmente considerando o que é visto e defina o tempo estimado."
 
         prompt = f"""
         Você é uma trancista profissional e especialista em penteados afro e nagô.
         {instrucao_cliente}
         
-        Retorne ESTRITAMENTE um objeto JSON válido (sem blocos de código markdown ou crases extras, apenas o JSON puro):
+        Retorne ESTRITAMENTE um objeto JSON válido (sem blocos de código markdown ou crases, apenas o JSON puro):
         {{
-          "estilo_identificado": "Nome do estilo ajustado ao pedido",
+          "estilo_identificado": "Nome do estilo",
           "dificuldade": "Baixa, Média ou Alta",
-          "tempo_estimado_minutos": 120,
-          "observacao": "Inicie obrigatoriamente mencionando o pedido do cliente e detalhe o impacto na execução e no tempo."
+          "tempo_estimado_minutos": 70,
+          "observacao": "Siga rigorosamente a instrução do Passo 4 explicando o cálculo de tempo."
         }}
         """
 
