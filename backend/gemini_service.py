@@ -16,27 +16,31 @@ def analisar_imagem_com_gemini(bytes_imagem, observacao_cliente: str = ""):
         if imagem_pil.mode in ("RGBA", "P"):
             imagem_pil = imagem_pil.convert("RGB")
             
-        # Contexto extra se o cliente digitou algo
-        nota_cliente_contexto = f"\nOBSERVAÇÃO DO CLIENTE SOBRE O PEDIDO: \"{observacao_cliente}\"\nLeve essa observação em conta para ajustar o tempo estimado e a descrição caso mude a complexidade (ex: menos tranças reduzem o tempo, acessórios podem alterar o processo)." if observacao_cliente else ""
+        # Bloco de instrução condicional forte caso o cliente tenha digitado algo
+        if observacao_cliente and observacao_cliente.strip():
+            instrucao_cliente = f"""
+            ATENÇÃO OBRIGATÓRIA À OBSERVAÇÃO DO CLIENTE: "{observacao_cliente}"
+            - Você DEVE adaptar obrigatoriamente a sua análise baseada neste pedido. 
+            - Se o cliente pediu para remover algo (ex: "sem acessórios", "menos tranças"), você NÃO deve considerar esses elementos, deve recalcular/reduzir o tempo estimado em relação ao que aparece visualmente na foto, e o campo "observacao" DEVE obrigatoriamente iniciar explicando como este pedido alterou a execução do penteado.
+            """
+        else:
+            instrucao_cliente = "Analise a imagem normalmente considerando o que é visto."
 
         prompt = f"""
         Você é uma trancista profissional e especialista em penteados afro e nagô.
-        Analise a imagem enviada e estime a complexidade e o TEMPO REAL.
+        {instrucao_cliente}
         
-        OBSERVAÇÃO OU PEDIDO ESPECIAL DO CLIENTE: "{observacao_cliente}"
-        INSTRUÇÃO CRUCIAL: No campo "observacao" do JSON, você DEVE obrigatoriamente começar mencionando o pedido do cliente (por exemplo: "Atendendo ao seu pedido de fazer sem acessórios..." ou "Considerando sua observação: [repetir o pedido]..."), explicando como isso impactou na execução ou no tempo estimado do penteado.
-        
-        Retorne ESTRITAMENTE um objeto JSON (sem marcações markdown):
+        Retorne ESTRITAMENTE um objeto JSON válido (sem blocos de código markdown ou crases extras, apenas o JSON puro):
         {{
-          "estilo_identificado": "Nome do estilo",
+          "estilo_identificado": "Nome do estilo ajustado ao pedido",
           "dificuldade": "Baixa, Média ou Alta",
           "tempo_estimado_minutos": 120,
-          "observacao": "Comece obrigatoriamente citando o pedido do cliente e detalhe o porquê da estimativa e da complexidade."
+          "observacao": "Inicie obrigatoriamente mencionando o pedido do cliente e detalhe o impacto na execução e no tempo."
         }}
         """
 
         response = client.models.generate_content(
-            model="gemini-2.5-flash",  # Ou o modelo que estiver usando/testando
+            model="gemini-2.5-flash",
             contents=[prompt, imagem_pil]
         )
 
