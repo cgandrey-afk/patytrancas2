@@ -21,14 +21,17 @@ def analisar_imagem_com_gemini(bytes_imagem, observacao_cliente: str = ""):
 
         prompt = f"""
         Você é uma trancista profissional e especialista em penteados afro e nagô.
-        Analise a imagem enviada e estime a complexidade e o TEMPO REAL.{nota_cliente_contexto}
+        Analise a imagem enviada e estime a complexidade e o TEMPO REAL.
+        
+        OBSERVAÇÃO OU PEDIDO ESPECIAL DO CLIENTE: "{observacao_cliente}"
+        INSTRUÇÃO CRUCIAL: No campo "observacao" do JSON, você DEVE obrigatoriamente começar mencionando o pedido do cliente (por exemplo: "Atendendo ao seu pedido de fazer sem acessórios..." ou "Considerando sua observação: [repetir o pedido]..."), explicando como isso impactou na execução ou no tempo estimado do penteado.
         
         Retorne ESTRITAMENTE um objeto JSON (sem marcações markdown):
         {{
-          "estilo_identificado": "Nagô Topo com Desenho Geométrico",
-          "Complexidade ": "Alta",
-          "tempo_estimado_minutos": 180,
-          "observacao": "Explicação detalhada da complexidade do desenho e como a observação do cliente afeta o resultado."
+          "estilo_identificado": "Nome do estilo",
+          "dificuldade": "Baixa, Média ou Alta",
+          "tempo_estimado_minutos": 120,
+          "observacao": "Comece obrigatoriamente citando o pedido do cliente e detalhe o porquê da estimativa e da complexidade."
         }}
         """
 
