@@ -31,8 +31,20 @@ app.add_middleware(
 @app.get("/api/agenda/dias")
 def listar_dias_disponiveis():
     agenda = fb.buscar_agenda_disponivel()
-    # Retorna apenas as chaves (datas, ex: ["2026-08-12", "2026-08-13"])
-    return list(agenda.keys())
+    if not isinstance(agenda, dict):
+        return []
+    
+    # Define o fuso horário oficial de Brasília para comparar corretamente a data de hoje
+    fuso_br = pytz.timezone("America/Sao_Paulo")
+    hoje_str = datetime.now(fuso_br).strftime("%Y-%m-%d")
+    
+    # Filtra apenas as datas que são DE HOJE em diante (remove datas passadas)
+    dias_futuros_e_hoje = [data for data in agenda.keys() if data >= hoje_str]
+    
+    # Ordena as datas cronologicamente
+    dias_futuros_e_hoje.sort()
+    
+    return dias_futuros_e_hoje
     
 @app.get("/api/agenda/horarios/{data}")
 def listar_horarios_por_data(data: str):
@@ -43,10 +55,13 @@ def listar_horarios_por_data(data: str):
         return []
 
     try:
-        # Define o fuso horário oficial de Brasília para evitar divergências com o servidor (Render/Vercel)
         fuso_br = pytz.timezone("America/Sao_Paulo")
         agora = datetime.now(fuso_br)
         hoje_str = agora.strftime("%Y-%m-%d")
+        
+        # Bloqueia se a pessoa tentar consultar uma data que já passou
+        if data < hoje_str:
+            return []
         
         # Aplica a regra dos 10 minutos apenas se a data consultada for HOJE
         if data == hoje_str:
@@ -55,12 +70,9 @@ def listar_horarios_por_data(data: str):
                 try:
                     hora_slot, min_slot = map(int, h_str.split(":"))
                 except ValueError:
-                    continue # Pula se houver algum formato inválido
+                    continue 
                 
-                # Monta o objeto datetime para o horário do slot no dia de hoje
                 dt_slot = agora.replace(hour=hora_slot, minute=min_slot, second=0, microsecond=0)
-                
-                # Calcula quanto tempo falta para o horário
                 diferenca = dt_slot - agora
                 
                 # Se ainda faltam mais de 10 minutos, o horário continua disponível
