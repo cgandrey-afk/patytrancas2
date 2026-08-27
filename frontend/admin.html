@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo | Paty Tranças</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Menu de Navegação Simplificado -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="brand-logo">
+        <span>Paty Tranças - Admin</span>
+      </a>
+      <a href="index.html" class="btn-nav-cta">Voltar para o Site</a>
+    </div>
+  </header>
+
+  <!-- Conteúdo do Painel -->
+  <section class="section-container" style="padding-top: 120px;">
+    <div class="section-title">
+      <h2>Painel Administrativo</h2>
+      <p>Gerencie a disponibilidade de datas e visualize os pedidos.</p>
+    </div>
+
+    <!-- Card para Abrir Agenda -->
+    <div class="form-card" style="margin-bottom: 40px;">
+      <h3 style="margin-bottom: 20px;">📅 Abrir Agenda do Dia</h3>
+      <div class="form-group">
+        <label for="dataAgenda">Data de Atendimento</label>
+        <input type="date" id="dataAgenda">
+      </div>
+      <div class="form-group">
+        <label for="horariosAgenda">Horários Disponíveis (separados por vírgula)</label>
+        <input type="text" id="horariosAgenda" value="08:00, 10:00, 13:00, 15:00, 17:00">
+      </div>
+      <button onclick="salvarAgenda()" class="btn-primary btn-full">Salvar Agenda no Sistema</button>
+      <p id="msgAgenda" class="status-msg"></p>
+    </div>
+
+    <!-- Card de Listagem de Agendamentos -->
+    <div class="form-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin: 0;">📋 Agendamentos Recebidos</h3>
+        <button class="btn-secondary" onclick="carregarAgendamentosAdmin()" style="padding: 8px 16px;">🔄 Atualizar</button>
+      </div>
+      <div id="listaAgendamentosAdmin">
+        <p style="text-align: center; color: var(--text-muted);">Carregando agendamentos...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Rodapé -->
+  <footer>
+    <div class="footer-container">
+      <p>👑 <strong>Paty Tranças</strong> — Painel de Controle Exclusivo.</p>
+    </div>
+  </footer>
+
+  <script>
+    const API_URL = "https://patytrancas2.onrender.com";
+
+    async function salvarAgenda() {
+      const data = document.getElementById('dataAgenda').value;
+      const horariosInput = document.getElementById('horariosAgenda').value;
+      const horarios = horariosInput.split(',').map(h => h.trim()).filter(h => h !== '');
+      const msg = document.getElementById('msgAgenda');
+
+      if (!data || horarios.length === 0) {
+        alert('Preencha a data e os horários corretos!');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/agenda`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data, horarios })
+        });
+
+        if (response.ok) {
+          msg.innerHTML = "<span style='color:#22c55e;'>✅ Agenda salva com sucesso!</span>";
+        } else {
+          msg.innerHTML = "<span style='color:#ef4444;'>❌ Erro ao salvar agenda.</span>";
+        }
+      } catch (e) {
+        msg.innerHTML = "<span style='color:#ef4444;'>❌ Erro de conexão com o servidor.</span>";
+      }
+    }
+
+    async function carregarAgendamentosAdmin() {
+      const container = document.getElementById('listaAgendamentosAdmin');
+      try {
+        const response = await fetch(`${API_URL}/api/admin/agendamentos-todos`);
+        const dados = await response.json();
+        
+        if (!Array.isArray(dados) || dados.length === 0) {
+          container.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Nenhum agendamento encontrado.</p>';
+          return;
+        }
+
+        container.innerHTML = dados.map(ag => `
+          <div class="agendamento-card" style="margin-bottom: 15px; border-left: 4px solid var(--primary);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <strong>${ag.cliente_nome}</strong> (${ag.servico})<br>
+                <small style="color:var(--text-muted)">📱 <a href="https://wa.me/55${ag.cliente_telefone.replace(/\D/g,'')}" target="_blank">${ag.cliente_telefone}</a></small><br>
+                <small>Status: <strong style="color: var(--primary);">${ag.status}</strong></small>
+              </div>
+              <div style="text-align:right;">
+                📅 ${ag.data_agendamento}<br>
+                ⏰ ${ag.horario}
+              </div>
+            </div>
+            <div style="margin-top: 12px; display: flex; gap: 8px; justify-content: flex-end;">
+              <button onclick="atualizarStatus('${ag.user_id}', '${ag.id}', 'Aprovado')" style="padding: 6px 14px; background: #22c55e; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">✅ Aprovar</button>
+              <button onclick="deletarAg('${ag.user_id}', '${ag.id}')" style="padding: 6px 14px; background: #ef4444; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 12px;">❌ Excluir</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        container.innerHTML = '<p style="text-align: center; color: #ef4444;">Erro ao carregar lista de agendamentos.</p>';
+      }
+    }
+
+    async function atualizarStatus(userId, docId, novoStatus) {
+      try {
+        await fetch(`${API_URL}/api/agendamentos/status`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId, doc_id: docId, novo_status: novoStatus })
+        });
+        alert('Status atualizado com sucesso!');
+        carregarAgendamentosAdmin();
+      } catch (e) {
+        alert('Erro ao atualizar status.');
+      }
+    }
+
+    async function deletarAg(userId, docId) {
+      if(confirm('Tem certeza que deseja excluir este agendamento?')) {
+        try {
+          await fetch(`${API_URL}/api/agendamentos/${userId}/${docId}`, { method: 'DELETE' });
+          carregarAgendamentosAdmin();
+        } catch (e) {
+          alert('Erro ao excluir agendamento.');
+        }
+      }
+    }
+
+    carregarAgendamentosAdmin();
+  </script>
+</body>
+</html>
