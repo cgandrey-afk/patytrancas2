@@ -515,7 +515,7 @@ def cancelar_agendamento_db(user_id: str, doc_id: str, status_atual: str):
             if data_agend and horario and servico:
                 voltar_horario_para_disponivel(data_agend, horario, servico)
                 
-            return {"acao": "cancelado", "mensagem": "Agendamento cancelado com sucesso e mantido no histórico."}
+            return {"acao": "cancelado", "mensagem": "Agendamento cancelado com sucesso."}
         else:
             # Caso seja um agendamento já confirmado que o cliente pediu para cancelar
             doc_ref.update({
