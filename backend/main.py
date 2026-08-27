@@ -28,38 +28,30 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/api/agenda/dias")
+@@app.get("/api/agenda/dias")
 def listar_dias_disponiveis(servico: Optional[str] = None):
     print(f"[DEBUG ROTA DIAS] Serviço recebido via query string: '{servico}'")
-    
-    if not servico:
-        print("[DEBUG ROTA DIAS] Serviço não informado. Retornando lista vazia.")
-        return []
 
     agenda = fb.buscar_agenda_disponivel()
     if not isinstance(agenda, dict):
-        print("[DEBUG ROTA DIAS] Agenda retornada não é um dicionário.")
         return []
     
     fuso_br = pytz.timezone("America/Sao_Paulo")
     hoje_str = datetime.now(fuso_br).strftime("%Y-%m-%d")
     
-    duracao_horas = fb.obtener_duracao_servico(servico)
-    print(f"[DEBUG ROTA DIAS] Duração calculada para '{servico}': {duracao_horas} horas")
+    # Se o serviço não foi escolhido, podemos usar um padrão (ex: 1 hora) 
+    # ou simplesmente listar todos os dias que tenham pelo menos 30 min livres
+    duracao_horas = fb.obtener_duracao_servico(servico) if servico else 0.5
     
     dias_validos = []
     for data, horarios in agenda.items():
         if data < hoje_str:
             continue
             
-        tem_espaco = fb.tem_espaco_consecutivo(horarios, duracao_horas)
-        print(f"[DEBUG ROTA DIAS] Data {data} tem espaço suficiente? {tem_espaco} (Horários livres: {horarios})")
-        
-        if tem_espaco:
+        if fb.tem_espaco_consecutivo(horarios, duracao_horas):
             dias_validos.append(data)
             
     dias_validos.sort()
-    print(f"[DEBUG ROTA DIAS] Dias válidos finais: {dias_validos}")
     return dias_validos
 
 @app.get("/api/agenda/horarios/{data}")
