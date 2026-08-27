@@ -4,7 +4,8 @@ import threading
 import firebase_admin
 import re
 from firebase_admin import credentials, firestore
-from datetime import datetime
+from datetime import datetime, timedelta
+import pytz
 
 
 # Inicialização do Firebase Admin
@@ -281,17 +282,39 @@ def mover_horario_para_indisponivel(data_str, horario_inicial, servico):
 
     doc_ref = db.collection("agenda").document(data_str)
     doc = doc_ref.get()
+    
+    fuso_br = pytz.timezone("America/Sao_Paulo")
+    agora = datetime.now(fuso_br)
+    data_hoje = agora.strftime("%Y-%m-%d")
+
     if doc.exists:
         dados = doc.to_dict()
         disponiveis = dados.get("horarios_disponiveis", [])
         indisponiveis = dados.get("horarios_indisponiveis", [])
         
+        # 1. Bloqueia os horários vindos do agendamento do serviço
         for h in horarios_a_bloquear:
             if h in disponiveis:
                 disponiveis.remove(h)
             if h not in indisponiveis:
                 indisponiveis.append(h)
                 
+        # 2. Regra automática de 10 minutos de antecedência para o dia de hoje
+        if data_str == data_hoje:
+            novos_disponiveis = []
+            for h in disponiveis:
+                hora_slot = datetime.strptime(h, "%H:%M").time()
+                data_hora_slot = fuso_br.localize(datetime.combine(agora.date(), hora_slot))
+                
+                # Se faltar menos de 10 minutos ou já passou, joga para indisponível
+                diferenca = data_hora_slot - agora
+                if diferenca.total_seconds() < (10 * 60):
+                    if h not in indisponiveis:
+                        indisponiveis.append(h)
+                else:
+                    novos_disponiveis.append(h)
+            disponiveis = novos_disponiveis
+
         disponiveis.sort(key=lambda x: [int(p) for p in x.split(":")])
         indisponiveis.sort(key=lambda x: [int(p) for p in x.split(":")])
             
