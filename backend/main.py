@@ -28,9 +28,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@@app.get("/api/agenda/dias")
+@app.get("/api/agenda/dias")
 def listar_dias_disponiveis(servico: Optional[str] = None):
-    print(f"[DEBUG ROTA DIAS] Serviço recebido via query string: '{servico}'")
+    # Converte string 'None' ou vazia para None real
+    if not servico or servico.lower() == 'none' or servico.strip() == '':
+        print("[DEBUG ROTA DIAS] Serviço não informado ou veio como 'None'. Assumindo duração padrão de 1h.")
+        servico = None # Ou coloque o nome de um serviço padrão do seu banco se preferir
+    else:
+        print(f"[DEBUG ROTA DIAS] Serviço recebido via query string: '{servico}'")
 
     agenda = fb.buscar_agenda_disponivel()
     if not isinstance(agenda, dict):
@@ -39,9 +44,8 @@ def listar_dias_disponiveis(servico: Optional[str] = None):
     fuso_br = pytz.timezone("America/Sao_Paulo")
     hoje_str = datetime.now(fuso_br).strftime("%Y-%m-%d")
     
-    # Se o serviço não foi escolhido, podemos usar um padrão (ex: 1 hora) 
-    # ou simplesmente listar todos os dias que tenham pelo menos 30 min livres
-    duracao_horas = fb.obtener_duracao_servico(servico) if servico else 0.5
+    # Se o serviço for None, usa 1.0 hora como padrão para não quebrar o calendário ao abrir a página
+    duracao_horas = fb.obter_duracao_servico(servico) if servico else 1.0
     
     dias_validos = []
     for data, horarios in agenda.items():
