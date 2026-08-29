@@ -142,6 +142,18 @@ def salvar_agendamento(user_id, nome, telefone, servico, data_agend, horario):
         duracao = obter_duracao_servico(servico)
         lista_horarios = calcular_blocos_horarios(horario, duracao)
 
+        # Define o nome do documento baseado na janela de horários (Ex: "14:00_16:00")
+        if lista_horarios:
+            h_inicio = lista_horarios[0]
+            # Calcula o término adicionando 30 minutos ao último bloco ou calculando pelo fim do serviço
+            # Se a lista tem blocos, o fim do último bloco avança 30 min para fechar a janela exata
+            partes_ultimo = lista_horarios[-1].split(":")
+            minutos_totais_fim = int(partes_ultimo[0]) * 60 + int(partes_ultimo[1]) + 30
+            h_fim = f"{minutos_totais_fim // 60}:{minutos_totais_fim % 60:02d}"
+            nome_doc_horario = f"{h_inicio}_{h_fim}"
+        else:
+            nome_doc_horario = horario
+
         novo_registro = {
             "cliente_nome": nome,
             "cliente_telefone": telefone,
@@ -156,8 +168,9 @@ def salvar_agendamento(user_id, nome, telefone, servico, data_agend, horario):
         # 1. Salva no histórico do usuário
         db.collection("usuarios").document(user_id).collection("agendamentos").add(novo_registro)
         
-        # 2. Salva o espelho na raiz como agendamentos > DATA > uid
+        # 2. Salva o espelho na raiz como agendamentos > DATA > 14:00_16:00
         espelho_raiz = {
+            "user_id": user_id,
             "cliente_nome": nome,
             "cliente_telefone": telefone,
             "servico": servico,
@@ -167,9 +180,7 @@ def salvar_agendamento(user_id, nome, telefone, servico, data_agend, horario):
             "status": "Pendente",
             "criado_em": novo_registro["criado_em"]
         }
-        db.collection("agendamentos").document(str(data_agend)).collection(user_id).document("detalhes").set(espelho_raiz)
-        # OU, se preferir que o uid seja um documento direto em vez de uma coleção interna, use:
-        # db.collection("agendamentos").document(str(data_agend)).set({user_id: espelho_raiz}, merge=True)
+        db.collection("agendamentos").document(str(data_agend)).collection("horarios").document(nome_doc_horario).set(espelho_raiz)
 
         return True
     except Exception as e:
@@ -518,11 +529,13 @@ def cancelar_agendamento_db(user_id: str, doc_id: str, status_atual: str):
         data_agend = None
         horario = None
         servico = None
+        lista_horarios = []
         if doc_dados.exists:
             d = doc_dados.to_dict()
             data_agend = d.get("data_agendamento")
             horario = d.get("horario")
             servico = d.get("servico")
+            lista_horarios = d.get("horarios_ocupados", [])
 
         if status_atual == "Pendente":
             fuso_br = pytz.timezone("America/Sao_Paulo")
@@ -535,12 +548,16 @@ def cancelar_agendamento_db(user_id: str, doc_id: str, status_atual: str):
                 "cancelado_em": agora_str
             })
             
-            # DELETA o espelho da raiz sem passar por 'itens'
-            if data_agend:
+            # DELETA o espelho da raiz usando o formato de janela de horário como ID do documento
+            if data_agend and lista_horarios:
                 try:
-                    db.collection("agendamentos").document(str(data_agend)).collection(user_id).document("detalhes").delete()
-                    # Se optou por salvar usando merge no documento da data, use:
-                    # db.collection("agendamentos").document(str(data_agend)).update({user_id: firestore.DELETE_FIELD})
+                    h_inicio = lista_horarios[0]
+                    partes_ultimo = lista_horarios[-1].split(":")
+                    minutos_totais_fim = int(partes_ultimo[0]) * 60 + int(partes_ultimo[1]) + 30
+                    h_fim = f"{minutos_totais_fim // 60}:{minutos_totais_fim % 60:02d}"
+                    nome_doc_horario = f"{h_inicio}_{h_fim}"
+
+                    db.collection("agendamentos").document(str(data_agend)).collection("horarios").document(nome_doc_horario).delete()
                 except Exception as ex:
                     print(f"Erro ao remover espelho da raiz no cancelamento: {ex}")
             
