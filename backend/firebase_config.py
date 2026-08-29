@@ -156,7 +156,7 @@ def salvar_agendamento(user_id, nome, telefone, servico, data_agend, horario):
         # 1. Salva no histórico do usuário
         db.collection("usuarios").document(user_id).collection("agendamentos").add(novo_registro)
         
-        # 2. Salva o espelho na raiz para consultas globais da agenda
+        # 2. Salva o espelho na raiz como agendamentos > DATA > uid
         espelho_raiz = {
             "cliente_nome": nome,
             "cliente_telefone": telefone,
@@ -167,7 +167,9 @@ def salvar_agendamento(user_id, nome, telefone, servico, data_agend, horario):
             "status": "Pendente",
             "criado_em": novo_registro["criado_em"]
         }
-        db.collection("agendamentos").document(str(data_agend)).collection("itens").document(user_id).set(espelho_raiz)
+        db.collection("agendamentos").document(str(data_agend)).collection(user_id).document("detalhes").set(espelho_raiz)
+        # OU, se preferir que o uid seja um documento direto em vez de uma coleção interna, use:
+        # db.collection("agendamentos").document(str(data_agend)).set({user_id: espelho_raiz}, merge=True)
 
         return True
     except Exception as e:
@@ -533,10 +535,12 @@ def cancelar_agendamento_db(user_id: str, doc_id: str, status_atual: str):
                 "cancelado_em": agora_str
             })
             
-            # DELETA o espelho da raiz para liberar o registro global daquela data
+            # DELETA o espelho da raiz sem passar por 'itens'
             if data_agend:
                 try:
-                    db.collection("agendamentos").document(str(data_agend)).collection("itens").document(user_id).delete()
+                    db.collection("agendamentos").document(str(data_agend)).collection(user_id).document("detalhes").delete()
+                    # Se optou por salvar usando merge no documento da data, use:
+                    # db.collection("agendamentos").document(str(data_agend)).update({user_id: firestore.DELETE_FIELD})
                 except Exception as ex:
                     print(f"Erro ao remover espelho da raiz no cancelamento: {ex}")
             
@@ -546,7 +550,6 @@ def cancelar_agendamento_db(user_id: str, doc_id: str, status_atual: str):
                 
             return {"acao": "cancelado", "mensagem": "Agendamento cancelado com sucesso."}
         else:
-            # Caso seja um agendamento já confirmado que o cliente pediu para cancelar
             doc_ref.update({
                 "pedido_cancelamento": True,
                 "status_cancelamento": "Pendente"
