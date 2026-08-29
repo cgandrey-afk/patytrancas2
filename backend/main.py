@@ -115,6 +115,7 @@ class StatusUpdateRequest(BaseModel):
     user_id: str
     doc_id: str
     novo_status: str
+    data_agendamento: Optional[str] = None # Adicionado para achar o espelho na raiz
 
 class AgendaAbrirRequest(BaseModel):
     data: str
@@ -191,8 +192,10 @@ def obter_contato():
 
 @app.put("/api/agendamentos/status")
 def atualizar_status(req: StatusUpdateRequest):
-    fb.atualizar_status_agendamento(req.doc_id, req.novo_status)
-    return {"mensagem": "Status atualizado!"}
+    sucesso = fb.atualizar_status_agendamento_db(req.user_id, req.doc_id, req.novo_status, req.data_agendamento)
+    if sucesso:
+        return {"mensagem": "Status atualizado com sucesso!"}
+    raise HTTPException(status_code=500, detail="Erro ao atualizar status.")
 
 # --- CANCELAMENTO CONDICIONAL ---
 @app.delete("/api/agendamentos/cancelar/{user_id}/{doc_id}")

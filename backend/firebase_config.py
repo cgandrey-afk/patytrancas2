@@ -148,12 +148,27 @@ def salvar_agendamento(user_id, nome, telefone, servico, data_agend, horario):
             "servico": servico,
             "data_agendamento": str(data_agend),
             "horario": horario,
-            "horarios_ocupados": lista_horarios, # Salva a lista completa (ex: ["8:00", "9:00", "10:00"])
+            "horarios_ocupados": lista_horarios, 
             "status": "Pendente",
             "criado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
         }
         
+        # 1. Salva no histórico do usuário
         db.collection("usuarios").document(user_id).collection("agendamentos").add(novo_registro)
+        
+        # 2. Salva o espelho na raiz para consultas globais da agenda
+        espelho_raiz = {
+            "cliente_nome": nome,
+            "cliente_telefone": telefone,
+            "servico": servico,
+            "data_agendamento": str(data_agend),
+            "horario": horario,
+            "horarios_ocupados": lista_horarios,
+            "status": "Pendente",
+            "criado_em": novo_registro["criado_em"]
+        }
+        db.collection("agendamentos").document(str(data_agend)).collection("itens").document(user_id).set(espelho_raiz)
+
         return True
     except Exception as e:
         print(f"Erro ao salvar agendamento: {e}")
@@ -186,8 +201,16 @@ def buscar_banners():
         return doc.to_dict()
     return {"ativo": False}
 
-def atualizar_status_agendamento(doc_id, novo_status):
+def atualizar_status_agendamento(doc_id, novo_status, user_id=None, data_agendamento=None):
+    # Mantém compatibilidade caso receba apenas o doc_id original da raiz
     db.collection("agendamentos").document(doc_id).update({"status": novo_status})
+    
+    # Se receber user_id e data, atualiza também o espelho na raiz e no usuário se necessário
+    if user_id and data_agendamento:
+        try:
+            db.collection("agendamentos").document(str(data_agendamento)).collection("itens").document(user_id).update({"status": novo_status})
+        except Exception as e:
+            print(f"Erro ao atualizar espelho de status na raiz: {e}")
 
 def deletar_agendamento(doc_id):
     db.collection("agendamentos").document(doc_id).delete()
@@ -499,7 +522,6 @@ def cancelar_agendamento_db(user_id: str, doc_id: str, status_atual: str):
             horario = d.get("horario")
             servico = d.get("servico")
 
-        # Em vez de deletar, agora mudamos o status para 'Cancelado' e liberamos o horário
         if status_atual == "Pendente":
             fuso_br = pytz.timezone("America/Sao_Paulo")
             agora_str = datetime.now(fuso_br).strftime("%Y-%m-%d %H:%M:%S")
@@ -510,6 +532,13 @@ def cancelar_agendamento_db(user_id: str, doc_id: str, status_atual: str):
                 "status_cancelamento": "Aprovado",
                 "cancelado_em": agora_str
             })
+            
+            # DELETA o espelho da raiz para liberar o registro global daquela data
+            if data_agend:
+                try:
+                    db.collection("agendamentos").document(str(data_agend)).collection("itens").document(user_id).delete()
+                except Exception as ex:
+                    print(f"Erro ao remover espelho da raiz no cancelamento: {ex}")
             
             # Devolve o horário para a agenda pública
             if data_agend and horario and servico:
