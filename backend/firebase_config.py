@@ -138,14 +138,11 @@ def calcular_blocos_horarios(horario_inicial: str, duracao_horas: float):
 
 def salvar_agendamento(user_id, nome, telefone, servico, data_agend, horario):
     try:
-        # 0. Garante que o documento do usuário (UID) tenha o nome e o telefone salvos diretamente nele
-        user_ref = db.collection("usuarios").document(user_id)
-        user_ref.set({
+        db.collection("usuarios").document(user_id).set({
             "cliente_nome": nome,
-            "cliente_telefone": telefone,
-            "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
+            "cliente_telefone": telefone
         }, merge=True)
-
+        
         # Descobre a duração e calcula todos os blocos ocupados
         duracao = obter_duracao_servico(servico)
         lista_horarios = calcular_blocos_horarios(horario, duracao)
@@ -153,6 +150,8 @@ def salvar_agendamento(user_id, nome, telefone, servico, data_agend, horario):
         # Define o nome do documento baseado na janela de horários (Ex: "14:00_16:00")
         if lista_horarios:
             h_inicio = lista_horarios[0]
+            # Calcula o término adicionando 30 minutos ao último bloco ou calculando pelo fim do serviço
+            # Se a lista tem blocos, o fim do último bloco avança 30 min para fechar a janela exata
             partes_ultimo = lista_horarios[-1].split(":")
             minutos_totais_fim = int(partes_ultimo[0]) * 60 + int(partes_ultimo[1]) + 30
             h_fim = f"{minutos_totais_fim // 60}:{minutos_totais_fim % 60:02d}"
@@ -171,8 +170,8 @@ def salvar_agendamento(user_id, nome, telefone, servico, data_agend, horario):
             "criado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
         }
         
-        # 1. Salva no histórico do usuário (subcoleção agendamentos)
-        user_ref.collection("agendamentos").add(novo_registro)
+        # 1. Salva no histórico do usuário
+        db.collection("usuarios").document(user_id).collection("agendamentos").add(novo_registro)
         
         # 2. Salva o espelho na raiz como agendamentos > DATA > 14:00_16:00
         espelho_raiz = {
