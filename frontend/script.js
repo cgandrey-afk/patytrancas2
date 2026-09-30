@@ -216,6 +216,15 @@ async function analisarFoto() {
 async function agendar(e) {
   e.preventDefault();
   const statusDiv = document.getElementById('mensagemStatus');
+  // 🔒 Validação: Extrai apenas os números do telefone
+    const telefoneApenasNumeros = document.getElementById('telefone').value.replace(/\D/g, '');
+
+    // DDD (2 dígitos) + Número (8 ou 9 dígitos) = Total de 10 ou 11 dígitos
+    if (telefoneApenasNumeros.length < 10 || telefoneApenasNumeros.length > 11) {
+      alert("⚠️ Por favor, digite o número de telefone completo com DDD no formato (XX) 9XXXX-XXXX!");
+      statusDiv.innerHTML = "<p style='color:#ef4444;'>❌ Telefone incompleto. Preencha o DDD + número completo.</p>";
+      return;
+    }
   statusDiv.innerHTML = "Salvando agendamento...";
 
   const payload = {
@@ -626,3 +635,27 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+// Máscara automática para telefone/WhatsApp no padrão (DD) XXXXX-XXXX ou (DD) XXXX-XXXX
+const inputTelefone = document.getElementById('telefone');
+if (inputTelefone) {
+  inputTelefone.addEventListener('input', (e) => {
+    let v = e.target.value.replace(/\D/g, ''); // Remove caracteres não numéricos
+    if (v.length > 11) v = v.slice(0, 11);
+
+    if (v.length > 10) {
+      // Formato para Celular com 9 dígitos: (XX) XXXXX-XXXX
+      v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+    } else if (v.length > 6) {
+      // Formato intermediário / Fixo com 8 dígitos: (XX) XXXX-XXXX
+      v = v.replace(/^(\d{2})(\d{4})(\d{0,4})$/, '($1) $2-$3');
+    } else if (v.length > 2) {
+      // Formato inicial com DDD: (XX) XXXX...
+      v = v.replace(/^(\d{2})(\d{0,5})$/, '($1) $2');
+    } else if (v.length > 0) {
+      // Apenas DDD: (XX...
+      v = v.replace(/^(\d{0,2})$/, '($1');
+    }
+
+    e.target.value = v;
+  });
+}
