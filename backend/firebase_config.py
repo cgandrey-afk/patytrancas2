@@ -572,10 +572,25 @@ def cancelar_agendamento_db(user_id: str, doc_id: str, status_atual: str):
                 
             return {"acao": "cancelado", "mensagem": "Agendamento cancelado com sucesso."}
         else:
-            doc_ref.update({
+            update_data = {
                 "pedido_cancelamento": True,
                 "status_cancelamento": "Pendente"
-            })
+            }
+            doc_ref.update(update_data)
+
+            # Atualiza também o documento espelho na coleção raiz 'agendamentos' para o app Android identificar
+            if data_agend and lista_horarios:
+                try:
+                    h_inicio = lista_horarios[0]
+                    partes_ultimo = lista_horarios[-1].split(":")
+                    minutos_totais_fim = int(partes_ultimo[0]) * 60 + int(partes_ultimo[1]) + 30
+                    h_fim = f"{minutos_totais_fim // 60}:{minutos_totais_fim % 60:02d}"
+                    nome_doc_horario = f"{h_inicio}_{h_fim}"
+
+                    db.collection("agendamentos").document(str(data_agend)).collection("horarios").document(nome_doc_horario).update(update_data)
+                except Exception as ex:
+                    print(f"Erro ao atualizar espelho raiz no pedido de cancelamento: {ex}")
+
             return {"acao": "solicitado", "mensagem": "Solicitação de cancelamento enviada à administração."}
             
     except Exception as e:
@@ -585,13 +600,36 @@ def cancelar_agendamento_db(user_id: str, doc_id: str, status_atual: str):
 def solicitar_reagendamento_db(user_id: str, doc_id: str, status_atual: str, nova_data: str, novo_horario: str):
     try:
         doc_ref = db.collection("usuarios").document(user_id).collection("agendamentos").document(doc_id)
-        if status_atual == "Aprovado":
-            doc_ref.update({
+        doc_dados = doc_ref.get()
+
+        data_agend = None
+        lista_horarios = []
+        if doc_dados.exists:
+            d = doc_dados.to_dict()
+            data_agend = d.get("data_agendamento")
+            lista_horarios = d.get("horarios_ocupados", [])
+
+        if status_atual in ["Aprovado", "Confirmado"]:
+            update_data = {
                 "pedido_reagendamento": True,
                 "status_reag": "Pendente",
                 "novo_data": nova_data,
                 "novo_horario": novo_horario
-            })
+            }
+            doc_ref.update(update_data)
+
+            if data_agend and lista_horarios:
+                try:
+                    h_inicio = lista_horarios[0]
+                    partes_ultimo = lista_horarios[-1].split(":")
+                    minutos_totais_fim = int(partes_ultimo[0]) * 60 + int(partes_ultimo[1]) + 30
+                    h_fim = f"{minutos_totais_fim // 60}:{minutos_totais_fim % 60:02d}"
+                    nome_doc_horario = f"{h_inicio}_{h_fim}"
+
+                    db.collection("agendamentos").document(str(data_agend)).collection("horarios").document(nome_doc_horario).update(update_data)
+                except Exception as ex:
+                    print(f"Erro ao atualizar espelho raiz no pedido de reagendamento: {ex}")
+
             return {"acao": "solicitado", "mensagem": "Solicitação de reagendamento enviada à administração."}
         return None
     except Exception as e:
