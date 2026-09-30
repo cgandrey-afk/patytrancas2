@@ -695,3 +695,13 @@ if (inputTelefone) {
     e.target.value = v;
   });
 }
+// Exibe a mensagem no rodapé mesmo quando o balão nativo "Preencha este campo" do HTML for acionado
+const form = document.getElementById('formAgendamento');
+if (form) {
+  form.addEventListener('invalid', (e) => {
+    const statusDiv = document.getElementById('mensagemStatus');
+    if (statusDiv) {
+      statusDiv.innerHTML = "<p style='color:#ef4444;'>❌ Por favor, preencha todos os campos obrigatórios com atenção.</p>";
+    }
+  }, true); // O argumento 'true' permite capturar o erro de qualquer campo do formulário
+}
