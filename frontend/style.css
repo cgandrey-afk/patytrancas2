@@ -556,6 +556,16 @@ footer {
   .nav-menu a:last-child {
     border-bottom: none;
   }
+
+  /* Garante que todos os inputs e selects ocupem exatamente a largura interna do quadrado */
+  input, select {
+    width: 100%;
+  }
+
+  /* Ajusta o espaçamento interno do quadrado branco no celular para dar mais margem às laterais */
+  .form-card {
+    padding: 25px 20px;
+  }
 }
 
 /* ============================================================= */
