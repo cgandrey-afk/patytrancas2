@@ -98,23 +98,8 @@ async function carregarServicos() {
     if (res.ok) {
       listaServicosGlobal = await res.json();
       
-      // Monta os cards na tela com os rótulos atualizados
-      if (container) {
-        container.innerHTML = listaServicosGlobal.map((item, index) => `
-          <div class="card-servico" onclick="abrirModalServico(${index})">
-            <h3>${item.nome}</h3>
-            <img src="${item.foto_url}" alt="${item.nome}" class="card-servico-img">
-            <p>${item.descricao_curta}</p>
-            
-            <div class="info-rapida-servico">
-              <span>⏱️ <strong>Execução:</strong> ${item.tempo_fazer || 'Sob consulta'}</span><br>
-              <span>⏳ <strong>Duração:</strong> ${item.durabilidade || 'Sob consulta'}</span>
-            </div>
-
-            <span class="price-tag">${item.preco}</span>
-          </div>
-        `).join('');
-      }
+      // Monta os cards na tela
+      renderizarGridServicos(listaServicosGlobal);
 
       // Preenche o campo de seleção do formulário de agendamento
       if (selectServico && listaServicosGlobal.length > 0) {
@@ -128,6 +113,51 @@ async function carregarServicos() {
   } catch (err) {
     console.error("Erro ao carregar serviços:", err);
   }
+}
+
+// Função para renderizar os cards de serviços
+function renderizarGridServicos(servicos) {
+  const container = document.getElementById('gridServicos');
+  if (!container) return;
+
+  if (servicos.length === 0) {
+    container.innerHTML = `<p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 30px 0;">🔍 Nenhum serviço encontrado.</p>`;
+    return;
+  }
+
+  container.innerHTML = servicos.map((item) => {
+    // Mapeia o índice original do serviço para manter o modal correto
+    const indexOriginal = listaServicosGlobal.findIndex(s => s.nome === item.nome);
+    return `
+      <div class="card-servico" onclick="abrirModalServico(${indexOriginal})">
+        <h3>${item.nome}</h3>
+        <img src="${item.foto_url}" alt="${item.nome}" class="card-servico-img">
+        <p>${item.descricao_curta}</p>
+
+        <div class="info-rapida-servico">
+          <span>⏱️ <strong>Execução:</strong> ${item.tempo_fazer || 'Sob consulta'}</span><br>
+          <span>⏳ <strong>Duração:</strong> ${item.durabilidade || 'Sob consulta'}</span>
+        </div>
+
+        <span class="price-tag">${item.preco}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// Função para filtrar os serviços em tempo real enquanto digita
+function filtrarServicos() {
+  const input = document.getElementById('inputBuscaServico');
+  if (!input) return;
+  const termo = input.value.toLowerCase().trim();
+
+  const filtrados = listaServicosGlobal.filter(item => {
+    const nome = (item.nome || '').toLowerCase();
+    const desc = (item.descricao_curta || '').toLowerCase();
+    return nome.includes(termo) || desc.includes(termo);
+  });
+
+  renderizarGridServicos(filtrados);
 }
 
 function abrirModalServico(index) {
