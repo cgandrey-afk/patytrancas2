@@ -243,6 +243,9 @@ async function analisarFoto() {
   }
 }
 
+let idAgendamentoEmReagendamento = null;
+let statusAgendamentoEmReagendamento = null;
+
 async function agendar(e) {
   e.preventDefault();
   const statusDiv = document.getElementById('mensagemStatus');
@@ -290,7 +293,14 @@ async function agendar(e) {
     return;
   }
 
-  // 3. Se passou em todas as validações, envia os dados ao servidor
+  // CENÁRIO 1: Reagendamento de agendamento CONFIRMADO (Aprovado / Confirmado)
+  if (idAgendamentoEmReagendamento && (statusAgendamentoEmReagendamento === "Confirmado" || statusAgendamentoEmReagendamento === "Aprovado")) {
+    statusDiv.innerHTML = "Enviando solicitação de reagendamento...";
+    await enviarSolicitacaoReagendamentoAprovado(idAgendamentoEmReagendamento, statusAgendamentoEmReagendamento, dataAgendamento, horario);
+    return;
+  }
+
+  // CENÁRIO 2 e Novo Agendamento
   statusDiv.innerHTML = "Salvando agendamento...";
 
   const payload = {
@@ -310,9 +320,19 @@ async function agendar(e) {
     });
 
     if (res.ok) {
+      // Se era um reagendamento de item PENDENTE, agora podemos remover o antigo com segurança
+      if (idAgendamentoEmReagendamento && statusAgendamentoEmReagendamento === "Pendente") {
+        try {
+          await fetch(`${API_URL}/api/agendamentos/cancelar/${MEU_USER_ID}/${idAgendamentoEmReagendamento}?status=Pendente`, {
+            method: "DELETE"
+          });
+        } catch (exOld) {
+          console.error("Erro ao cancelar agendamento antigo após reagendar:", exOld);
+        }
+      }
+
       statusDiv.innerHTML = "<p style='color:#22c55e;'>✅ Agendamento realizado com sucesso!</p>";
-      document.getElementById('formAgendamento').reset();
-      limparHorarios();
+      cancelarModoReagendamento();
       carregarAgendamentos();
 
       // Faz a mensagem de sucesso sumir após 5 segundos
@@ -426,25 +446,55 @@ async function executarCancelamento(docId, statusAtual) {
 }
 
 function prepararReagendamento(docId, statusAtual, nome, telefone, servico) {
-  if (statusAtual === "Pendente") {
-    document.getElementById('nome').value = nome;
-    document.getElementById('telefone').value = telefone;
-    document.getElementById('servico').value = servico;
-    document.getElementById('data').value = "";
-    limparHorarios();
+  idAgendamentoEmReagendamento = docId;
+  statusAgendamentoEmReagendamento = statusAtual;
 
-    executarCancelamento(docId, "Pendente");
-    document.getElementById('formAgendamento').scrollIntoView({ behavior: 'smooth' });
-    alert("Dados carregados no formulário! Escolha a nova data e horário e clique em agendar.");
+  const inputNome = document.getElementById('nome');
+  const inputTelefone = document.getElementById('telefone');
+  const selectServico = document.getElementById('servico');
+  const inputData = document.getElementById('data');
 
-  } else if (statusAtual === "Aprovado") {
-    const novaData = prompt("Digite a nova data desejada (AAAA-MM-DD):");
-    const novoHorario = prompt("Digite o novo horário desejado (HH:MM):");
+  if (inputNome) inputNome.value = nome || '';
+  if (inputTelefone) inputTelefone.value = telefone || '';
+  if (selectServico) selectServico.value = servico || '';
+  if (inputData) inputData.value = '';
 
-    if (!novaData || !novoHorario) return;
+  limparHorarios();
+  inicializarCalendario();
 
-    enviarSolicitacaoReagendamentoAprovado(docId, statusAtual, novaData, novoHorario);
+  const btnSubmit = document.getElementById('btnSubmitAgendamento');
+  const btnCancelar = document.getElementById('btnCancelarReagendamento');
+
+  if (statusAtual === "Confirmado" || statusAtual === "Aprovado") {
+    if (btnSubmit) btnSubmit.innerText = "🔄 Solicitar Reagendamento";
+    if (btnCancelar) btnCancelar.style.display = "block";
+    alert("📌 Escolha a nova data e horário. A solicitação de reagendamento será enviada para aprovação do administrador.");
+  } else {
+    // Status "Pendente"
+    if (btnSubmit) btnSubmit.innerText = "🔄 Confirmar Reagendamento";
+    if (btnCancelar) btnCancelar.style.display = "block";
+    alert("📌 Escolha a nova data e horário. O agendamento antigo só será substituído quando você confirmar o novo!");
   }
+
+  const formElement = document.getElementById('formAgendamento');
+  if (formElement) {
+    formElement.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function cancelarModoReagendamento() {
+  idAgendamentoEmReagendamento = null;
+  statusAgendamentoEmReagendamento = null;
+
+  const formElement = document.getElementById('formAgendamento');
+  if (formElement) formElement.reset();
+  limparHorarios();
+
+  const btnSubmit = document.getElementById('btnSubmitAgendamento');
+  const btnCancelar = document.getElementById('btnCancelarReagendamento');
+
+  if (btnSubmit) btnSubmit.innerText = "✨ Confirmar Agendamento";
+  if (btnCancelar) btnCancelar.style.display = "none";
 }
 
 async function enviarSolicitacaoReagendamentoAprovado(docId, statusAtual, novaData, novoHorario) {
@@ -456,6 +506,8 @@ async function enviarSolicitacaoReagendamentoAprovado(docId, statusAtual, novaDa
     novo_horario: novoHorario
   };
 
+  const statusDiv = document.getElementById('mensagemStatus');
+
   try {
     const res = await fetch(`${API_URL}/api/agendamentos/reagendar-aprovado`, {
       method: "POST",
@@ -465,14 +517,19 @@ async function enviarSolicitacaoReagendamentoAprovado(docId, statusAtual, novaDa
 
     if (res.ok) {
       const data = await res.json();
-      alert(data.mensagem);
+      if (statusDiv) statusDiv.innerHTML = `<p style='color:#22c55e;'>✅ ${data.mensagem}</p>`;
+      cancelarModoReagendamento();
       carregarAgendamentos();
+
+      setTimeout(() => {
+        if (statusDiv) statusDiv.innerHTML = "";
+      }, 5000);
     } else {
-      alert("Erro ao solicitar reagendamento.");
+      if (statusDiv) statusDiv.innerHTML = "<p style='color:#ef4444;'>❌ Erro ao solicitar reagendamento.</p>";
     }
   } catch (err) {
     console.error("Erro:", err);
-    alert("Erro de conexão com o servidor.");
+    if (statusDiv) statusDiv.innerHTML = "<p style='color:#ef4444;'>❌ Erro de conexão com o servidor.</p>";
   }
 }
 

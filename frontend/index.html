@@ -161,7 +161,10 @@
           </div>
         </div>
 
-        <button type="submit" class="btn-primary btn-full">✨ Confirmar Agendamento</button>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <button type="submit" id="btnSubmitAgendamento" class="btn-primary btn-full">✨ Confirmar Agendamento</button>
+          <button type="button" id="btnCancelarReagendamento" class="btn-secondary btn-full" style="display: none;" onclick="cancelarModoReagendamento()">❌ Cancelar Reagendamento</button>
+        </div>
       </form>
       <div id="mensagemStatus" class="status-msg"></div>
     </div>
