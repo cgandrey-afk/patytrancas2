@@ -120,7 +120,7 @@ h1, h2, h3 {
 
 /* Hero Section (Área dos Banners Responsivos) */
 .hero {
-  padding-top: 85px;
+  padding-top: 105px;
   padding-bottom: 20px;
   background: var(--bg-main);
   text-align: center;
@@ -501,7 +501,7 @@ footer {
 /* Responsividade Mobile */
 @media (max-width: 768px) {
   .hero {
-    padding-top: 75px;
+    padding-top: 95px;
   }
 
   .hero-container {
