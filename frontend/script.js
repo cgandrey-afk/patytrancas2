@@ -216,24 +216,60 @@ async function analisarFoto() {
 async function agendar(e) {
   e.preventDefault();
   const statusDiv = document.getElementById('mensagemStatus');
-  // 🔒 Validação: Extrai apenas os números do telefone
-    const telefoneApenasNumeros = document.getElementById('telefone').value.replace(/\D/g, '');
 
-    // DDD (2 dígitos) + Número (8 ou 9 dígitos) = Total de 10 ou 11 dígitos
-    if (telefoneApenasNumeros.length < 10 || telefoneApenasNumeros.length > 11) {
-      alert("⚠️ Por favor, digite o número de telefone completo com DDD no formato (XX) 9XXXX-XXXX!");
-      statusDiv.innerHTML = "<p style='color:#ef4444;'>❌ Telefone incompleto. Preencha o DDD + número completo.</p>";
-      return;
-    }
+  // 1. Limpa qualquer mensagem de status/erro anterior
+  statusDiv.innerHTML = "";
+
+  // Captura e limpa os valores digitados nos campos
+  const nome = document.getElementById('nome').value.trim();
+  const telefone = document.getElementById('telefone').value.trim();
+  const telefoneApenasNumeros = telefone.replace(/\D/g, '');
+  const servico = document.getElementById('servico').value.trim();
+  const dataAgendamento = document.getElementById('data').value.trim();
+  const horario = document.getElementById('horario').value.trim();
+
+  // 2. Validações campo a campo com foco e mensagens específicas
+
+  if (!nome) {
+    statusDiv.innerHTML = "<p style='color:#ef4444;'>❌ Por favor, preencha o seu Nome Completo.</p>";
+    document.getElementById('nome').focus();
+    return;
+  }
+
+  if (telefoneApenasNumeros.length < 10 || telefoneApenasNumeros.length > 11) {
+    statusDiv.innerHTML = "<p style='color:#ef4444;'>❌ Telefone incompleto. Preencha o DDD + número completo no formato (XX) 9XXXX-XXXX.</p>";
+    document.getElementById('telefone').focus();
+    return;
+  }
+
+  if (!servico) {
+    statusDiv.innerHTML = "<p style='color:#ef4444;'>❌ Por favor, selecione um Serviço/Modelo.</p>";
+    document.getElementById('servico').focus();
+    return;
+  }
+
+  if (!dataAgendamento) {
+    statusDiv.innerHTML = "<p style='color:#ef4444;'>❌ Por favor, selecione a Data de Atendimento.</p>";
+    document.getElementById('data').focus();
+    return;
+  }
+
+  if (!horario) {
+    statusDiv.innerHTML = "<p style='color:#ef4444;'>❌ Por favor, selecione um Horário de Atendimento.</p>";
+    document.getElementById('horario').focus();
+    return;
+  }
+
+  // 3. Se passou em todas as validações, envia os dados ao servidor
   statusDiv.innerHTML = "Salvando agendamento...";
 
   const payload = {
-    user_id: MEU_USER_ID, 
-    cliente_nome: document.getElementById('nome').value,
-    cliente_telefone: document.getElementById('telefone').value,
-    servico: document.getElementById('servico').value,
-    data_agendamento: document.getElementById('data').value,
-    horario: document.getElementById('horario').value
+    user_id: MEU_USER_ID,
+    cliente_nome: nome,
+    cliente_telefone: telefone,
+    servico: servico,
+    data_agendamento: dataAgendamento,
+    horario: horario
   };
 
   try {
@@ -246,8 +282,8 @@ async function agendar(e) {
     if (res.ok) {
       statusDiv.innerHTML = "<p style='color:#22c55e;'>✅ Agendamento realizado com sucesso!</p>";
       document.getElementById('formAgendamento').reset();
-      limparHorarios(); 
-      carregarAgendamentos(); 
+      limparHorarios();
+      carregarAgendamentos();
 
       // Faz a mensagem de sucesso sumir após 5 segundos
       setTimeout(() => {
