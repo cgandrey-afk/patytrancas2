@@ -496,39 +496,6 @@ function prepararReagendamento(docId, statusAtual, nome, telefone, servico) {
   }
 }
 
-  const inputNome = document.getElementById('nome');
-  const inputTelefone = document.getElementById('telefone');
-  const selectServico = document.getElementById('servico');
-  const inputData = document.getElementById('data');
-
-  if (inputNome) inputNome.value = nome || '';
-  if (inputTelefone) inputTelefone.value = telefone || '';
-  if (selectServico) selectServico.value = servico || '';
-  if (inputData) inputData.value = '';
-
-  limparHorarios();
-  inicializarCalendario();
-
-  const btnSubmit = document.getElementById('btnSubmitAgendamento');
-  const btnCancelar = document.getElementById('btnCancelarReagendamento');
-
-  if (statusAtual === "Confirmado" || statusAtual === "Aprovado") {
-    if (btnSubmit) btnSubmit.innerText = "🔄 Solicitar Reagendamento";
-    if (btnCancelar) btnCancelar.style.display = "block";
-    alert("📌 Escolha a nova data e horário. A solicitação de reagendamento será enviada para aprovação do administrador.");
-  } else {
-    // Status "Pendente"
-    if (btnSubmit) btnSubmit.innerText = "🔄 Confirmar Reagendamento";
-    if (btnCancelar) btnCancelar.style.display = "block";
-    alert("📌 Escolha a nova data e horário. O agendamento antigo só será substituído quando você confirmar o novo!");
-  }
-
-  const formElement = document.getElementById('formAgendamento');
-  if (formElement) {
-    formElement.scrollIntoView({ behavior: 'smooth' });
-  }
-}
-
 function cancelarModoReagendamento() {
   idAgendamentoEmReagendamento = null;
   statusAgendamentoEmReagendamento = null;
