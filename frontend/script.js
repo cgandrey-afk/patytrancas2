@@ -1,5 +1,15 @@
 const API_URL = "https://patytrancas2.onrender.com";
 
+// Formata datas AAAA-MM-DD para o padrão visual brasileiro DD/MM/AAAA
+function formatarDataBR(dataStr) {
+  if (!dataStr || typeof dataStr !== 'string') return dataStr || '';
+  const partes = dataStr.trim().split('-');
+  if (partes.length === 3 && partes[0].length === 4) {
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+  }
+  return dataStr;
+}
+
 // Obtém ou cria um ID de usuário único e permanente para este navegador/aparelho
 function obterUserIdUnico() {
   let userId = localStorage.getItem('paty_trancas_user_id');
@@ -386,10 +396,10 @@ async function carregarAgendamentos() {
                 <small style="color:var(--text-muted)">📱 ${item.cliente_telefone}</small><br>
                 <small>Status: <strong style="color: ${corStatus}">${statusTexto}</strong></small>
                 ${item.pedido_cancelamento ? '<br><small style="color:#ef4444">⚠️ Cancelamento solicitado (Pendente)</small>' : ''}
-                ${item.pedido_reagendamento ? '<br><small style="color:#3b82f6">⚠️ Reagendamento solicitado para ' + item.novo_data + ' às ' + item.novo_horario + ' (Status: ' + (item.status_reag || 'Pendente') + ')</small>' : ''}
+                ${item.pedido_reagendamento ? '<br><small style="color:#3b82f6">⚠️ Reagendamento solicitado para ' + formatarDataBR(item.novo_data) + ' às ' + item.novo_horario + ' (Status: ' + (item.status_reag || 'Pendente') + ')</small>' : ''}
               </div>
               <div style="text-align:right;">
-                📅 ${item.data_agendamento}<br>
+                📅 ${formatarDataBR(item.data_agendamento)}<br>
                 ⏰ ${item.horario}
               </div>
             </div>
@@ -617,7 +627,7 @@ function enviarAgendamentoWhatsApp(dados) {
     `Olá, Paty! Gostaria de agendar um horário.\n\n` +
     `👤 *Nome:* ${dados.nome}\n` +
     `💇 *Serviço:* ${dados.servico}\n` +
-    `📅 *Data:* ${dados.data}\n` +
+    `📅 *Data:* ${formatarDataBR(dados.data)}\n` +
     `⏰ *Horário:* ${dados.horario}`
   );
 
