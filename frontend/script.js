@@ -294,7 +294,10 @@ async function agendar(e) {
   }
 
   // CENÁRIO 1: Reagendamento de agendamento CONFIRMADO (Aprovado / Confirmado)
-  if (idAgendamentoEmReagendamento && (statusAgendamentoEmReagendamento === "Confirmado" || statusAgendamentoEmReagendamento === "Aprovado")) {
+  const isConfirmadoEmReag = statusAgendamentoEmReagendamento &&
+    (statusAgendamentoEmReagendamento.toLowerCase() === "confirmado" || statusAgendamentoEmReagendamento.toLowerCase() === "aprovado");
+
+  if (idAgendamentoEmReagendamento && isConfirmadoEmReag) {
     statusDiv.innerHTML = "Enviando solicitação de reagendamento...";
     await enviarSolicitacaoReagendamentoAprovado(idAgendamentoEmReagendamento, statusAgendamentoEmReagendamento, dataAgendamento, horario);
     return;
@@ -363,9 +366,17 @@ async function carregarAgendamentos() {
 
     if (res.ok && Array.isArray(agendamentos) && agendamentos.length > 0) {
       container.innerHTML = agendamentos.map(item => {
-        let corStatus = "#eab308"; 
-        if (item.status === "Aprovado") corStatus = "#22c55e"; 
-        if (item.status === "Cancelado") corStatus = "#ef4444"; 
+        const stLower = (item.status || "").toString().toLowerCase().trim();
+        let corStatus = "#eab308";
+        let statusTexto = item.status || 'Pendente, aguardando aprovação';
+
+        if (stLower === "confirmado" || stLower === "aprovado") {
+          corStatus = "#22c55e";
+          statusTexto = "Confirmado";
+        } else if (stLower === "cancelado") {
+          corStatus = "#ef4444";
+          statusTexto = "Cancelado";
+        }
 
         return `
           <div class="agendamento-card" style="border-left: 4px solid ${corStatus}; padding: 12px; margin-bottom: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
@@ -373,7 +384,7 @@ async function carregarAgendamentos() {
               <div>
                 <strong>${item.cliente_nome}</strong> (${item.servico})<br>
                 <small style="color:var(--text-muted)">📱 ${item.cliente_telefone}</small><br>
-                <small>Status: <strong style="color: ${corStatus}">${item.status || 'Pendente, aguardando aprovação'}</strong></small>
+                <small>Status: <strong style="color: ${corStatus}">${statusTexto}</strong></small>
                 ${item.pedido_cancelamento ? '<br><small style="color:#ef4444">⚠️ Cancelamento solicitado (Pendente)</small>' : ''}
                 ${item.pedido_reagendamento ? '<br><small style="color:#3b82f6">⚠️ Reagendamento solicitado para ' + item.novo_data + ' às ' + item.novo_horario + ' (Status: ' + (item.status_reag || 'Pendente') + ')</small>' : ''}
               </div>
@@ -447,7 +458,43 @@ async function executarCancelamento(docId, statusAtual) {
 
 function prepararReagendamento(docId, statusAtual, nome, telefone, servico) {
   idAgendamentoEmReagendamento = docId;
-  statusAgendamentoEmReagendamento = statusAtual;
+
+  const stLower = (statusAtual || "").toString().toLowerCase().trim();
+  const isConfirmado = stLower === "confirmado" || stLower === "aprovado";
+
+  statusAgendamentoEmReagendamento = isConfirmado ? "Confirmado" : "Pendente";
+
+  const inputNome = document.getElementById('nome');
+  const inputTelefone = document.getElementById('telefone');
+  const selectServico = document.getElementById('servico');
+  const inputData = document.getElementById('data');
+
+  if (inputNome) inputNome.value = nome || '';
+  if (inputTelefone) inputTelefone.value = telefone || '';
+  if (selectServico) selectServico.value = servico || '';
+  if (inputData) inputData.value = '';
+
+  limparHorarios();
+  inicializarCalendario();
+
+  const btnSubmit = document.getElementById('btnSubmitAgendamento');
+  const btnCancelar = document.getElementById('btnCancelarReagendamento');
+
+  if (isConfirmado) {
+    if (btnSubmit) btnSubmit.innerText = "🔄 Solicitar Reagendamento";
+    if (btnCancelar) btnCancelar.style.display = "block";
+    alert("📌 Escolha a nova data e horário. A solicitação de reagendamento será enviada para aprovação do administrador.");
+  } else {
+    if (btnSubmit) btnSubmit.innerText = "🔄 Confirmar Reagendamento";
+    if (btnCancelar) btnCancelar.style.display = "block";
+    alert("📌 Escolha a nova data e horário. O agendamento antigo só será substituído quando você confirmar o novo!");
+  }
+
+  const formElement = document.getElementById('formAgendamento');
+  if (formElement) {
+    formElement.scrollIntoView({ behavior: 'smooth' });
+  }
+}
 
   const inputNome = document.getElementById('nome');
   const inputTelefone = document.getElementById('telefone');
