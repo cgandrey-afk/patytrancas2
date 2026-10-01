@@ -603,18 +603,28 @@ def solicitar_reagendamento_db(user_id: str, doc_id: str, status_atual: str, nov
         doc_dados = doc_ref.get()
 
         data_agend = None
+        servico = None
         lista_horarios = []
         if doc_dados.exists:
             d = doc_dados.to_dict()
             data_agend = d.get("data_agendamento")
+            servico = d.get("servico")
             lista_horarios = d.get("horarios_ocupados", [])
 
         if status_atual in ["Aprovado", "Confirmado"]:
+            # 1. Calcula a lista de novos horários e já bloqueia na nova data na agenda pública
+            novos_horarios_ocupados = []
+            if servico and nova_data and novo_horario:
+                duracao = obter_duracao_servico(servico)
+                novos_horarios_ocupados = calcular_blocos_horarios(novo_horario, duracao)
+                mover_horario_para_indisponivel(nova_data, novo_horario, servico)
+
             update_data = {
                 "pedido_reagendamento": True,
                 "status_reag": "Pendente",
                 "novo_data": nova_data,
-                "novo_horario": novo_horario
+                "novo_horario": novo_horario,
+                "novos_horarios_ocupados": novos_horarios_ocupados
             }
             doc_ref.update(update_data)
 
@@ -628,6 +638,13 @@ def solicitar_reagendamento_db(user_id: str, doc_id: str, status_atual: str, nov
 
                     db.collection("agendamentos").document(str(data_agend)).collection("horarios").document(nome_doc_horario).update(update_data)
                 except Exception as ex:
+                    print(f"Erro ao atualizar espelho raiz no pedido de reagendamento: {ex}")
+
+            return {"acao": "solicitado", "mensagem": "Solicitação de reagendamento enviada à administração."}
+        return None
+    except Exception as e:
+        print(f"Erro ao solicitar reagendamento: {e}")
+        return None
                     print(f"Erro ao atualizar espelho raiz no pedido de reagendamento: {ex}")
 
             return {"acao": "solicitado", "mensagem": "Solicitação de reagendamento enviada à administração."}
