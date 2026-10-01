@@ -645,13 +645,6 @@ def solicitar_reagendamento_db(user_id: str, doc_id: str, status_atual: str, nov
     except Exception as e:
         print(f"Erro ao solicitar reagendamento: {e}")
         return None
-                    print(f"Erro ao atualizar espelho raiz no pedido de reagendamento: {ex}")
-
-            return {"acao": "solicitado", "mensagem": "Solicitação de reagendamento enviada à administração."}
-        return None
-    except Exception as e:
-        print(f"Erro ao solicitar reagendamento: {e}")
-        return None
         
 def filtrar_horarios_iniciais_sequenciais(horarios_disponiveis: list, duracao_horas: float):
     print(f"[DEBUG FILTRO] Horários disponíveis recebidos: {horarios_disponiveis} | Duração necessária (horas): {duracao_horas}")
