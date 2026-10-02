@@ -319,7 +319,7 @@ async function agendar(e) {
   const payload = {
     user_id: MEU_USER_ID,
     cliente_nome: nome,
-    cliente_telefone: telefone,
+    cliente_telefone: telefoneApenasNumeros,
     servico: servico,
     data_agendamento: dataAgendamento,
     horario: horario
