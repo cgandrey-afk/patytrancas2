@@ -373,6 +373,7 @@ async function carregarAgendamentos() {
   try {
     const res = await fetch(`${API_URL}/api/agendamentos/${MEU_USER_ID}`);
     const agendamentos = await res.json();
+    const servicoEncontrado = listaServicosGlobal.find(s => s.nome === item.servico); const precoTexto = servicoEncontrado ? servicoEncontrado.preco : (item.preco || '');
 
     if (res.ok && Array.isArray(agendamentos) && agendamentos.length > 0) {
       container.innerHTML = agendamentos.map(item => {
@@ -410,7 +411,10 @@ async function carregarAgendamentos() {
             <div class="agendamento-card-header">
               <div>
                 <div class="agendamento-cliente">${item.cliente_nome || 'Cliente'}</div>
-                <div class="agendamento-servico">${item.servico}</div>
+                <!-- Exibe o Nome do Serviço e o Preço em Dourado -->
+                <div class="agendamento-servico">
+                  ${item.servico} ${precoTexto ? `<span style="color: var(--gold); font-weight: 700; margin-left: 6px;">(${precoTexto})</span>` : ''}
+                </div>
               </div>
               <div class="agendamento-data-badge">
                 📅 ${formatarDataBR(item.data_agendamento)} às ${item.horario}
