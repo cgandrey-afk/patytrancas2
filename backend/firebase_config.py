@@ -645,7 +645,73 @@ def solicitar_reagendamento_db(user_id: str, doc_id: str, status_atual: str, nov
     except Exception as e:
         print(f"Erro ao solicitar reagendamento: {e}")
         return None
-        
+
+def desistir_solicitacao_db(user_id: str, doc_id: str):
+    try:
+        user_doc_ref = db.collection("usuarios").document(user_id).collection("agendamentos").document(doc_id)
+        doc_dados = user_doc_ref.get()
+        if not doc_dados.exists:
+            return False
+
+        d = doc_dados.to_dict()
+        data_agend = d.get("data_agendamento")
+        lista_horarios = d.get("horarios_ocupados", [])
+        novo_data = d.get("novo_data")
+        novos_horarios_ocupados = d.get("novos_horarios_ocupados", [])
+
+        # Se havia reserva na nova data pelo pedido de reagendamento, devolve para disponível na agenda pública
+        if novo_data and novos_horarios_ocupados:
+            try:
+                agenda_nova_ref = db.collection("agenda").document(novo_data)
+                doc_agenda = agenda_nova_ref.get()
+                if doc_agenda.exists:
+                    indisponiveis = doc_agenda.to_dict().get("horarios_indisponiveis", [])
+                    disponiveis = doc_agenda.to_dict().get("horarios_disponiveis", [])
+                    for h in novos_horarios_ocupados:
+                        if h in indisponiveis:
+                            indisponiveis.remove(h)
+                        if h not in disponiveis:
+                            disponiveis.append(h)
+                    disponiveis.sort(key=lambda x: [int(p) for p in x.split(":")])
+                    agenda_nova_ref.update({
+                        "horarios_disponiveis": disponiveis,
+                        "horarios_indisponiveis": indisponiveis,
+                        "atualizado_em": datetime.now().strftime("%Y-%m-%d %H:%M")
+                    })
+            except Exception as ex:
+                print(f"Erro ao liberar novos horários ao desistir de reagendamento: {ex}")
+
+        reset_data = {
+            "pedido_cancelamento": False,
+            "status_cancelamento": "",
+            "pedido_reagendamento": False,
+            "status_reag": "",
+            "novo_data": "",
+            "novo_horario": "",
+            "novos_horarios_ocupados": []
+        }
+
+        # Atualiza documento do usuário
+        user_doc_ref.update(reset_data)
+
+        # Atualiza documento espelho na raiz
+        if data_agend and lista_horarios:
+            try:
+                h_inicio = lista_horarios[0]
+                partes_ultimo = lista_horarios[-1].split(":")
+                minutos_totais_fim = int(partes_ultimo[0]) * 60 + int(partes_ultimo[1]) + 30
+                h_fim = f"{minutos_totais_fim // 60}:{minutos_totais_fim % 60:02d}"
+                nome_doc_horario = f"{h_inicio}_{h_fim}"
+
+                db.collection("agendamentos").document(str(data_agend)).collection("horarios").document(nome_doc_horario).update(reset_data)
+            except Exception as ex:
+                print(f"Erro ao atualizar espelho raiz na desistência de solicitação: {ex}")
+
+        return True
+    except Exception as e:
+        print(f"Erro ao desistir da solicitação: {e}")
+        return False
+
 def filtrar_horarios_iniciais_sequenciais(horarios_disponiveis: list, duracao_horas: float):
     print(f"[DEBUG FILTRO] Horários disponíveis recebidos: {horarios_disponiveis} | Duração necessária (horas): {duracao_horas}")
     if not horarios_disponiveis:

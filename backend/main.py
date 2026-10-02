@@ -213,6 +213,14 @@ def solicitar_reagendamento_rota(req: ReagendarAprovadoRequest):
         return resultado
     raise HTTPException(status_code=400, detail="Não foi possível solicitar o reagendamento.")
 
+# --- DESISTIR DE SOLICITAÇÃO PENDENTE (CANCELAMENTO OU REAGENDAMENTO) ---
+@app.post("/api/agendamentos/desistir-solicitacao/{user_id}/{doc_id}")
+def desistir_solicitacao_rota(user_id: str, doc_id: str):
+    sucesso = fb.desistir_solicitacao_db(user_id, doc_id)
+    if sucesso:
+        return {"mensagem": "Solicitação cancelada com sucesso!"}
+    raise HTTPException(status_code=500, detail="Erro ao cancelar solicitação.")
+
 @app.delete("/api/agendamentos/{user_id}/{doc_id}")
 def deletar_agendamento(user_id: str, doc_id: str):
     fb.deletar_agendamento(doc_id)

@@ -388,27 +388,47 @@ async function carregarAgendamentos() {
           statusTexto = "Cancelado";
         }
 
+        let boxSolicitacao = '';
+        if (item.pedido_cancelamento) {
+          boxSolicitacao = `
+            <div class="agendamento-solicitacao-box">
+              <span>⚠️ Cancelamento solicitado (Aguardando aprovação)</span>
+              <button class="btn-cancelar-solicitacao" onclick='desistirSolicitacao("${item.id}")'>❌ Cancelar Solicitação</button>
+            </div>
+          `;
+        } else if (item.pedido_reagendamento) {
+          boxSolicitacao = `
+            <div class="agendamento-solicitacao-box reagendamento">
+              <span>⚠️ Reagendamento para ${formatarDataBR(item.novo_data)} às ${item.novo_horario} (Aguardando aprovação)</span>
+              <button class="btn-cancelar-solicitacao" onclick='desistirSolicitacao("${item.id}")'>❌ Cancelar Solicitação</button>
+            </div>
+          `;
+        }
+
         return `
-          <div class="agendamento-card" style="border-left: 4px solid ${corStatus}; padding: 12px; margin-bottom: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div class="agendamento-card" style="border-left: 5px solid ${corStatus};">
+            <div class="agendamento-card-header">
               <div>
-                <strong>${item.cliente_nome}</strong> (${item.servico})<br>
-                <small style="color:var(--text-muted)">📱 ${item.cliente_telefone}</small><br>
-                <small>Status: <strong style="color: ${corStatus}">${statusTexto}</strong></small>
-                ${item.pedido_cancelamento ? '<br><small style="color:#ef4444">⚠️ Cancelamento solicitado (Pendente)</small>' : ''}
-                ${item.pedido_reagendamento ? '<br><small style="color:#3b82f6">⚠️ Reagendamento solicitado para ' + formatarDataBR(item.novo_data) + ' às ' + item.novo_horario + ' (Status: ' + (item.status_reag || 'Pendente') + ')</small>' : ''}
+                <div class="agendamento-cliente">${item.cliente_nome || 'Cliente'}</div>
+                <div class="agendamento-servico">${item.servico}</div>
               </div>
-              <div style="text-align:right;">
-                📅 ${formatarDataBR(item.data_agendamento)}<br>
-                ⏰ ${item.horario}
+              <div class="agendamento-data-badge">
+                📅 ${formatarDataBR(item.data_agendamento)} às ${item.horario}
               </div>
             </div>
 
-            <div style="margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end;">
-              <button onclick='prepararReagendamento("${item.id}", "${item.status}", "${item.cliente_nome}", "${item.cliente_telefone}", "${item.servico}")' style="padding: 6px 12px; background: #3b82f6; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;">
+            <div class="agendamento-info-row">
+              <span>📱 ${item.cliente_telefone || 'Sem telefone'}</span>
+              <span>Status: <strong style="color: ${corStatus}">${statusTexto}</strong></span>
+            </div>
+
+            ${boxSolicitacao}
+
+            <div class="agendamento-card-actions">
+              <button onclick='prepararReagendamento("${item.id}", "${item.status}", "${item.cliente_nome}", "${item.cliente_telefone}", "${item.servico}")' style="background: #3b82f6;">
                 🔄 Reagendar
               </button>
-              <button onclick='executarCancelamento("${item.id}", "${item.status}")' style="padding: 6px 12px; background: #ef4444; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 12px;">
+              <button onclick='executarCancelamento("${item.id}", "${item.status}")' style="background: #ef4444;">
                 ❌ Cancelar
               </button>
             </div>
@@ -420,6 +440,27 @@ async function carregarAgendamentos() {
     }
   } catch (err) {
     container.innerHTML = "<p style='color:#ef4444;'>Erro ao carregar os agendamentos.</p>";
+  }
+}
+
+async function desistirSolicitacao(docId) {
+  if (!confirm("Deseja realmente cancelar esta solicitação pendente?")) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/agendamentos/desistir-solicitacao/${MEU_USER_ID}/${docId}`, {
+      method: "POST"
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      alert(data.mensagem || "Solicitação cancelada com sucesso!");
+      carregarAgendamentos();
+    } else {
+      alert("Erro ao cancelar a solicitação.");
+    }
+  } catch (err) {
+    console.error("Erro:", err);
+    alert("Erro de conexão com o servidor.");
   }
 }
 

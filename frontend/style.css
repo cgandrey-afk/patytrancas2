@@ -439,19 +439,125 @@ input:focus, select:focus {
 .agendamentos-grid {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 18px;
   max-width: 700px;
   margin: 0 auto;
 }
 
 .agendamento-card {
-  background: white;
+  background: var(--bg-card);
   padding: 20px;
-  border-radius: 12px;
+  border-radius: 16px;
   border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.agendamento-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.agendamento-cliente {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.3;
+}
+
+.agendamento-servico {
+  font-size: 0.9rem;
+  color: var(--primary);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.agendamento-data-badge {
+  background: var(--bg-main);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.agendamento-info-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.agendamento-solicitacao-box {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 10px 14px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.agendamento-solicitacao-box.reagendamento {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.25);
+  color: #2563eb;
+}
+
+.btn-cancelar-solicitacao {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.btn-cancelar-solicitacao:hover {
+  background: #dc2626;
+  transform: scale(1.02);
+}
+
+.agendamento-card-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.agendamento-card-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: opacity 0.2s, transform 0.1s;
+}
+
+.agendamento-card-actions button:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
 }
 
 .status-msg {
@@ -603,6 +709,47 @@ footer {
   /* Ajusta o espaçamento interno do quadrado branco no celular para dar mais margem às laterais */
   .form-card {
     padding: 25px 20px;
+  }
+
+  /* Ajustes do Card de Agendamentos no Celular */
+  .agendamento-card {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .agendamento-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .agendamento-data-badge {
+    align-self: flex-start;
+    font-size: 0.8rem;
+    padding: 5px 12px;
+  }
+
+  .agendamento-card-actions {
+    width: 100%;
+    margin-top: 6px;
+  }
+
+  .agendamento-card-actions button {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+  }
+
+  .agendamento-solicitacao-box {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .btn-cancelar-solicitacao {
+    width: 100%;
+    text-align: center;
+    padding: 8px;
   }
 }
 
