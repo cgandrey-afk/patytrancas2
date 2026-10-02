@@ -373,11 +373,11 @@ async function carregarAgendamentos() {
   try {
     const res = await fetch(`${API_URL}/api/agendamentos/${MEU_USER_ID}`);
     const agendamentos = await res.json();
-    const servicoEncontrado = listaServicosGlobal.find(s => s.nome === item.servico);
-    const precoTexto = servicoEncontrado ? servicoEncontrado.preco : (item.preco || '');
 
     if (res.ok && Array.isArray(agendamentos) && agendamentos.length > 0) {
       container.innerHTML = agendamentos.map(item => {
+        const servicoEncontrado = listaServicosGlobal.find(s => s.nome === item.servico);
+        const precoTexto = servicoEncontrado ? servicoEncontrado.preco : (item.preco || '');
         const stLower = (item.status || "").toString().toLowerCase().trim();
         let corStatus = "#eab308";
         let statusTexto = item.status || 'Pendente, aguardando aprovação';
