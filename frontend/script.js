@@ -460,10 +460,6 @@ async function carregarAgendamentos() {
             </div>
           </div>
         `;
-              ${botoesAcao}
-            </div>
-          </div>
-        `;
       }).join('');
     } else {
       container.innerHTML = "<p style='color:var(--text-muted);'>Nenhum agendamento encontrado para este aparelho.</p>";
