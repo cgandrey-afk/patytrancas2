@@ -407,28 +407,6 @@ async function carregarAgendamentos() {
           `;
         }
 
-        return `
-          <div class="agendamento-card" style="border-left: 5px solid ${corStatus};">
-            <div class="agendamento-card-header">
-              <div>
-                <div class="agendamento-cliente">${item.cliente_nome || 'Cliente'}</div>
-                <!-- Exibe o Nome do Serviço e o Preço em Dourado -->
-                <div class="agendamento-servico">
-                  ${item.servico} ${precoTexto ? `<span style="color: var(--gold); font-weight: 700; margin-left: 6px;">(${precoTexto})</span>` : ''}
-                </div>
-              </div>
-              <div class="agendamento-data-badge">
-                📅 ${formatarDataBR(item.data_agendamento)} às ${item.horario}
-              </div>
-            </div>
-
-            <div class="agendamento-info-row">
-              <span>📱 ${item.cliente_telefone || 'Sem telefone'}</span>
-              <span>Status: <strong style="color: ${corStatus}">${statusTexto}</strong></span>
-            </div>
-
-            ${boxSolicitacao}
-
         let botoesAcao = '';
         if (item.status_conclusao === true) {
           if (item.avaliacao_feita) {
@@ -478,6 +456,10 @@ async function carregarAgendamentos() {
             ${boxSolicitacao}
 
             <div class="agendamento-card-actions">
+              ${botoesAcao}
+            </div>
+          </div>
+        `;
               ${botoesAcao}
             </div>
           </div>
