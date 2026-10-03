@@ -429,13 +429,56 @@ async function carregarAgendamentos() {
 
             ${boxSolicitacao}
 
+        let botoesAcao = '';
+        if (item.status_conclusao === true) {
+          if (item.avaliacao_feita) {
+            botoesAcao = `
+              <div style="color: var(--gold); font-weight: 600; font-size: 0.9rem; text-align: center; width: 100%; padding: 6px 0;">
+                ✨ Atendimento Avaliado (${'⭐'.repeat(item.stars_tranca || 5)})
+              </div>
+            `;
+          } else {
+            botoesAcao = `
+              <button onclick='abrirModalAvaliacao("${item.id}")' style="background: #d4af37; color: white; width: 100%;">
+                ⭐ Avaliar Atendimento
+              </button>
+            `;
+          }
+        } else {
+          botoesAcao = `
+            <button onclick='prepararReagendamento("${item.id}", "${item.status}", "${item.cliente_nome}", "${item.cliente_telefone}", "${item.servico}")' style="background: #3b82f6;">
+              🔄 Reagendar
+            </button>
+            <button onclick='executarCancelamento("${item.id}", "${item.status}")' style="background: #ef4444;">
+              ❌ Cancelar
+            </button>
+          `;
+        }
+
+        return `
+          <div class="agendamento-card" style="border-left: 5px solid ${corStatus};">
+            <div class="agendamento-card-header">
+              <div>
+                <div class="agendamento-cliente">${item.cliente_nome || 'Cliente'}</div>
+                <!-- Exibe o Nome do Serviço e o Preço em Dourado -->
+                <div class="agendamento-servico">
+                  ${item.servico} ${precoTexto ? `<span style="color: var(--gold); font-weight: 700; margin-left: 6px;">(${precoTexto})</span>` : ''}
+                </div>
+              </div>
+              <div class="agendamento-data-badge">
+                📅 ${formatarDataBR(item.data_agendamento)} às ${item.horario}
+              </div>
+            </div>
+
+            <div class="agendamento-info-row">
+              <span>📱 ${item.cliente_telefone || 'Sem telefone'}</span>
+              <span>Status: <strong style="color: ${corStatus}">${statusTexto}</strong></span>
+            </div>
+
+            ${boxSolicitacao}
+
             <div class="agendamento-card-actions">
-              <button onclick='prepararReagendamento("${item.id}", "${item.status}", "${item.cliente_nome}", "${item.cliente_telefone}", "${item.servico}")' style="background: #3b82f6;">
-                🔄 Reagendar
-              </button>
-              <button onclick='executarCancelamento("${item.id}", "${item.status}")' style="background: #ef4444;">
-                ❌ Cancelar
-              </button>
+              ${botoesAcao}
             </div>
           </div>
         `;
@@ -445,6 +488,107 @@ async function carregarAgendamentos() {
     }
   } catch (err) {
     container.innerHTML = "<p style='color:#ef4444;'>Erro ao carregar os agendamentos.</p>";
+  }
+}
+
+// =============================================================
+// FUNÇÕES DO MODAL E ESTRELAS DE AVALIAÇÃO DO ATENDIMENTO
+// =============================================================
+let agendamentoParaAvaliar = null;
+let valStarsTempo = 0;
+let valStarsTranca = 0;
+
+function abrirModalAvaliacao(docId) {
+  agendamentoParaAvaliar = docId;
+  valStarsTempo = 0;
+  valStarsTranca = 0;
+
+  resetarEstrelas('starsTempoExecucao');
+  resetarEstrelas('starsAvaliacaoTranca');
+
+  const inputSug = document.getElementById('inputSugestaoServ');
+  if (inputSug) inputSug.value = '';
+
+  const msgDiv = document.getElementById('msgStatusAvaliacao');
+  if (msgDiv) msgDiv.innerHTML = '';
+
+  const modal = document.getElementById('modalAvaliacao');
+  if (modal) modal.style.display = 'flex';
+}
+
+function fecharModalAvaliacao(e, forcar = false) {
+  const modal = document.getElementById('modalAvaliacao');
+  if (!modal) return;
+  if (forcar || (e && e.target.id === 'modalAvaliacao')) {
+    modal.style.display = 'none';
+  }
+}
+
+function selecionarEstrela(containerId, valor) {
+  if (containerId === 'starsTempoExecucao') valStarsTempo = valor;
+  if (containerId === 'starsAvaliacaoTranca') valStarsTranca = valor;
+
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const estrelas = container.querySelectorAll('.star-btn');
+  estrelas.forEach((star, index) => {
+    if (index < valor) {
+      star.className = 'fas fa-star star-btn active';
+    } else {
+      star.className = 'far fa-star star-btn';
+    }
+  });
+}
+
+function resetarEstrelas(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const estrelas = container.querySelectorAll('.star-btn');
+  estrelas.forEach(star => {
+    star.className = 'far fa-star star-btn';
+  });
+}
+
+async function submeterAvaliacao() {
+  const msgDiv = document.getElementById('msgStatusAvaliacao');
+
+  if (valStarsTempo === 0 || valStarsTranca === 0) {
+    alert("⚠️ Por favor, selecione a quantidade de estrelas tanto para o Tempo quanto para a Trança!");
+    return;
+  }
+
+  const sugestaoTexto = document.getElementById('inputSugestaoServ').value.trim();
+
+  if (msgDiv) msgDiv.innerHTML = "Enviando avaliação...";
+
+  const payload = {
+    user_id: MEU_USER_ID,
+    doc_id: agendamentoParaAvaliar,
+    stars_tpexc: valStarsTempo,
+    stars_tranca: valStarsTranca,
+    sugestao_serv: sugestaoTexto
+  };
+
+  try {
+    const res = await fetch(`${API_URL}/api/agendamentos/avaliar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      if (msgDiv) msgDiv.innerHTML = "<p style='color:#22c55e;'>✅ Avaliação enviada com sucesso! Muito obrigado!</p>";
+      setTimeout(() => {
+        fecharModalAvaliacao(null, true);
+        carregarAgendamentos();
+      }, 1500);
+    } else {
+      if (msgDiv) msgDiv.innerHTML = "<p style='color:#ef4444;'>❌ Não foi possível salvar a avaliação.</p>";
+    }
+  } catch (err) {
+    console.error("Erro ao avaliar:", err);
+    if (msgDiv) msgDiv.innerHTML = "<p style='color:#ef4444;'>❌ Erro de conexão com o servidor.</p>";
   }
 }
 

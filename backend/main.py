@@ -128,6 +128,13 @@ class ReagendarAprovadoRequest(BaseModel):
     nova_data: str
     novo_horario: str
 
+class AvaliacaoRequest(BaseModel):
+    user_id: str
+    doc_id: str
+    stars_tpexc: int
+    stars_tranca: int
+    sugestao_serv: str
+
 # -------------------------------------------------------------
 # ROTAS DA API
 # -------------------------------------------------------------
@@ -220,6 +227,14 @@ def desistir_solicitacao_rota(user_id: str, doc_id: str):
     if sucesso:
         return {"mensagem": "Solicitação cancelada com sucesso!"}
     raise HTTPException(status_code=500, detail="Erro ao cancelar solicitação.")
+
+# --- AVALIAÇÃO DO ATENDIMENTO CONCLUÍDO ---
+@app.post("/api/agendamentos/avaliar")
+def avaliar_agendamento_rota(req: AvaliacaoRequest):
+    sucesso = fb.salvar_avaliacao_db(req.user_id, req.doc_id, req.stars_tpexc, req.stars_tranca, req.sugestao_serv)
+    if sucesso:
+        return {"mensagem": "Avaliação enviada com sucesso! Muito obrigado!"}
+    raise HTTPException(status_code=500, detail="Erro ao salvar avaliação.")
 
 @app.delete("/api/agendamentos/{user_id}/{doc_id}")
 def deletar_agendamento(user_id: str, doc_id: str):

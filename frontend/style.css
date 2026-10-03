@@ -499,6 +499,35 @@ input:focus, select:focus {
   color: var(--text-muted);
 }
 
+/* Avaliação / Estrelas */
+.rating-group {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stars-container {
+  display: flex;
+  gap: 10px;
+  font-size: 2rem;
+  margin-top: 4px;
+}
+
+.star-btn {
+  cursor: pointer;
+  color: var(--text-main);
+  transition: color 0.2s ease, transform 0.15s ease;
+}
+
+.star-btn:hover {
+  transform: scale(1.2);
+}
+
+.star-btn.active {
+  color: #d4af37 !important;
+}
+
 .agendamento-solicitacao-box {
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.25);

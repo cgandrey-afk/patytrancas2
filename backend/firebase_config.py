@@ -712,6 +712,46 @@ def desistir_solicitacao_db(user_id: str, doc_id: str):
         print(f"Erro ao desistir da solicitação: {e}")
         return False
 
+def salvar_avaliacao_db(user_id: str, doc_id: str, stars_tpexc: int, stars_tranca: int, sugestao_serv: str):
+    try:
+        user_doc_ref = db.collection("usuarios").document(user_id).collection("agendamentos").document(doc_id)
+        doc_dados = user_doc_ref.get()
+        if not doc_dados.exists:
+            return False
+
+        d = doc_dados.to_dict()
+        data_agend = d.get("data_agendamento")
+        lista_horarios = d.get("horarios_ocupados", [])
+
+        avaliacao_data = {
+            "stars_tpexc": stars_tpexc,
+            "stars_tranca": stars_tranca,
+            "sugestao_serv": sugestao_serv,
+            "avaliacao_feita": True,
+            "avaliado_em": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        # 1. Salva na pasta do usuário
+        user_doc_ref.update(avaliacao_data)
+
+        # 2. Salva no espelho na raiz agendamentos/{data}/horarios/{nome_doc_horario}
+        if data_agend and lista_horarios:
+            try:
+                h_inicio = lista_horarios[0]
+                partes_ultimo = lista_horarios[-1].split(":")
+                minutos_totais_fim = int(partes_ultimo[0]) * 60 + int(partes_ultimo[1]) + 30
+                h_fim = f"{minutos_totais_fim // 60}:{minutos_totais_fim % 60:02d}"
+                nome_doc_horario = f"{h_inicio}_{h_fim}"
+
+                db.collection("agendamentos").document(str(data_agend)).collection("horarios").document(nome_doc_horario).update(avaliacao_data)
+            except Exception as ex:
+                print(f"Erro ao salvar avaliação no espelho raiz: {ex}")
+
+        return True
+    except Exception as e:
+        print(f"Erro ao salvar avaliação: {e}")
+        return False
+
 def filtrar_horarios_iniciais_sequenciais(horarios_disponiveis: list, duracao_horas: float):
     print(f"[DEBUG FILTRO] Horários disponíveis recebidos: {horarios_disponiveis} | Duração necessária (horas): {duracao_horas}")
     if not horarios_disponiveis:
