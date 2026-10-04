@@ -221,8 +221,11 @@ h1, h2, h3 {
 /* Grid de Serviços */
 .grid-servicos {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 25px;
+  max-height: 540px;
+  overflow-y: auto;
+  padding: 8px 6px 12px 0;
 }
 
 .card-servico {
@@ -442,6 +445,9 @@ input:focus, select:focus {
   gap: 18px;
   max-width: 700px;
   margin: 0 auto;
+  max-height: 580px;
+  overflow-y: auto;
+  padding-right: 6px;
 }
 
 .agendamento-card {
@@ -563,6 +569,30 @@ input:focus, select:focus {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
   margin-top: 20px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+/* Estilização Personalizada das Barras de Rolagem Internas */
+.grid-servicos::-webkit-scrollbar,
+.grid-comentarios::-webkit-scrollbar,
+.agendamentos-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.grid-servicos::-webkit-scrollbar-track,
+.grid-comentarios::-webkit-scrollbar-track,
+.agendamentos-grid::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+
+.grid-servicos::-webkit-scrollbar-thumb,
+.grid-comentarios::-webkit-scrollbar-thumb,
+.agendamentos-grid::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 10px;
 }
 
 .comentario-card {
