@@ -364,6 +364,19 @@ async function agendar(e) {
   }
 }
 
+// Verifica se o agendamento já passou da data e horário atuais
+function agendamentoJaPassou(dataStr, horarioStr) {
+  if (!dataStr || !horarioStr) return false;
+  try {
+    const horaPadronizada = horarioStr.length === 4 ? '0' + horarioStr : horarioStr;
+    const dtAgend = new Date(`${dataStr}T${horaPadronizada}:00`);
+    const agora = new Date();
+    return dtAgend < agora;
+  } catch (e) {
+    return false;
+  }
+}
+
 async function carregarAgendamentos() {
   const container = document.getElementById('listaAgendamentos');
   if (!container) return;
@@ -407,7 +420,9 @@ async function carregarAgendamentos() {
           `;
         }
 
+        const jaPassou = agendamentoJaPassou(item.data_agendamento, item.horario);
         let botoesAcao = '';
+
         if (item.status_conclusao === true) {
           if (item.avaliacao_feita) {
             botoesAcao = `
@@ -422,6 +437,12 @@ async function carregarAgendamentos() {
               </button>
             `;
           }
+        } else if (jaPassou) {
+          botoesAcao = `
+            <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; width: 100%; padding: 6px 0; font-weight: 500;">
+              ⏳ Horário de atendimento finalizado
+            </div>
+          `;
         } else {
           botoesAcao = `
             <button onclick='prepararReagendamento("${item.id}", "${item.status}", "${item.cliente_nome}", "${item.cliente_telefone}", "${item.servico}")' style="background: #3b82f6;">
