@@ -845,3 +845,35 @@ def buscar_avaliacoes_publicas():
             "total_avaliacoes": 0,
             "comentarios": []
         }
+
+def obter_favoritos_db(user_id: str):
+    try:
+        doc = db.collection("usuarios").document(user_id).get()
+        if doc.exists:
+            favs = doc.to_dict().get("favoritos", [])
+            return favs if isinstance(favs, list) else []
+        return []
+    except Exception as e:
+        print(f"Erro ao obter favoritos do usuário: {e}")
+        return []
+
+def toggle_favorito_db(user_id: str, servico_nome: str):
+    try:
+        doc_ref = db.collection("usuarios").document(user_id)
+        doc = doc_ref.get()
+        favoritos = []
+        if doc.exists:
+            raw = doc.to_dict().get("favoritos", [])
+            if isinstance(raw, list):
+                favoritos = raw
+
+        if servico_nome in favoritos:
+            favoritos.remove(servico_nome)
+        else:
+            favoritos.append(servico_nome)
+
+        doc_ref.set({"favoritos": favoritos}, merge=True)
+        return favoritos
+    except Exception as e:
+        print(f"Erro ao alternar favorito: {e}")
+        return []

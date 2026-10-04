@@ -58,11 +58,25 @@
 		<p>Escolha o estilo ideal para você</p>
 	  </div>
 
-	  <!-- Barra de Pesquisa de Serviços -->
+	  <!-- Barra de Pesquisa de Serviços e Filtros -->
 	  <div class="search-box-container">
 	    <div class="search-box">
 	      <i class="fas fa-search search-icon"></i>
 	      <input type="text" id="inputBuscaServico" placeholder="Pesquisar serviço..." aria-label="Pesquisar serviço" oninput="filtrarServicos()">
+	    </div>
+
+	    <!-- Botão e Opções de Filtro -->
+	    <div class="filter-controls-container">
+	      <button class="btn-toggle-filtro" onclick="toggleFiltrosOpcoes()">
+	        <i class="fas fa-sliders-h"></i> + FILTRO
+	      </button>
+
+	      <div id="filtroOpcoesContainer" class="filtro-chips-group" style="display: none;">
+	        <button class="chip-filtro active" onclick="selecionarCategoriaFiltro('todas', this)">Todas</button>
+	        <button class="chip-filtro" onclick="selecionarCategoriaFiltro('feminina', this)">👩 Femininas</button>
+	        <button class="chip-filtro" onclick="selecionarCategoriaFiltro('masculina', this)">👨 Masculinas</button>
+	        <button class="chip-filtro" onclick="selecionarCategoriaFiltro('favorito', this)">❤️ Favoritos</button>
+	      </div>
 	    </div>
 	  </div>
 

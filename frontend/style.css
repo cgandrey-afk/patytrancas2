@@ -218,6 +218,98 @@ h1, h2, h3 {
   box-shadow: 0 4px 18px rgba(194, 89, 117, 0.15);
 }
 
+/* Filtros e Favoritos de Serviços */
+.search-box-container {
+  max-width: 600px;
+  margin: 0 auto 30px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filter-controls-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-toggle-filtro {
+  background: var(--bg-card);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-toggle-filtro:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.filtro-chips-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.chip-filtro {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  padding: 6px 16px;
+  border-radius: 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chip-filtro:hover, .chip-filtro.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* Header do Card de Serviço e Ícone de Coração */
+.card-servico-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.card-servico-header h3 {
+  margin-bottom: 0;
+}
+
+.btn-heart-favorite {
+  background: none;
+  border: none;
+  font-size: 1.35rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: transform 0.15s ease, color 0.15s ease;
+  padding: 4px;
+}
+
+.btn-heart-favorite:hover {
+  transform: scale(1.25);
+}
+
+.btn-heart-favorite i.active,
+.btn-heart-favorite i.fas {
+  color: #e11d48 !important; /* Rosa / Vermelho vibrante */
+}
+
 /* Grid de Serviços */
 .grid-servicos {
   display: grid;
