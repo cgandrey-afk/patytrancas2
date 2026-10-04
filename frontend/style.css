@@ -222,15 +222,15 @@ h1, h2, h3 {
 .grid-servicos {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  max-height: 760px;
+  gap: 25px;
+  max-height: 1020px;
   overflow-y: auto;
   padding: 8px 8px 12px 0;
 }
 
 .card-servico {
   background: var(--bg-card);
-  padding: 18px;
+  padding: 25px;
   border-radius: 16px;
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
@@ -246,15 +246,14 @@ h1, h2, h3 {
 }
 
 .card-servico h3 {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   color: var(--text-main);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .card-servico-img {
   width: 100%;
-  aspect-ratio: 16 / 10;
-  max-height: 180px;
+  aspect-ratio: 4 / 5;
   object-fit: cover;
   object-position: top center;
   border-radius: 8px;
