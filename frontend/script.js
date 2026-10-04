@@ -978,9 +978,12 @@ async function carregarAvaliacoesPublicas() {
           `).join('');
         }
       }
+    } else {
+      if (container) container.innerHTML = `<p style="text-align: center; color: var(--text-muted); grid-column: 1 / -1;">Nenhum comentário publicado ainda.</p>`;
     }
   } catch (err) {
     console.error("Erro ao carregar avaliações públicas:", err);
+    if (container) container.innerHTML = `<p style="text-align: center; color: var(--text-muted); grid-column: 1 / -1;">Nenhum comentário publicado ainda.</p>`;
   }
 }
 
