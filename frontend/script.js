@@ -942,6 +942,48 @@ async function carregarHorariosDisponiveis(dataStr, servico = '') {
   }
 }
 
+// Busca e renderiza as avaliações e média no site
+async function carregarAvaliacoesPublicas() {
+  const container = document.getElementById('gridComentariosPublicos');
+  const scoreNum = document.getElementById('scoreMediaTranca');
+  const starsDisplay = document.getElementById('starsMediaTranca');
+  const totalReviewsText = document.getElementById('totalAvaliacoesText');
+
+  try {
+    const res = await fetch(`${API_URL}/api/avaliacoes/publicas`);
+    if (res.ok) {
+      const data = await res.json();
+
+      const media = data.media_tranca || 5.0;
+      const total = data.total_avaliacoes || 0;
+      const numEstrelas = Math.round(media);
+
+      if (scoreNum) scoreNum.innerText = media.toFixed(1);
+      if (starsDisplay) starsDisplay.innerText = '⭐'.repeat(numEstrelas);
+      if (totalReviewsText) totalReviewsText.innerText = `Média baseada em ${total} ${total === 1 ? 'avaliação' : 'avaliações'}`;
+
+      if (container) {
+        if (!data.comentarios || data.comentarios.length === 0) {
+          container.innerHTML = `<p style="text-align: center; color: var(--text-muted); grid-column: 1 / -1;">Nenhum comentário publicado ainda.</p>`;
+        } else {
+          container.innerHTML = data.comentarios.map(item => `
+            <div class="comentario-card">
+              <div class="comentario-header">
+                <span class="comentario-cliente">👤 ${item.cliente_nome}</span>
+                <span class="comentario-stars">${'⭐'.repeat(item.stars_tranca || 5)}</span>
+              </div>
+              <div class="comentario-servico">✨ ${item.servico}</div>
+              <p class="comentario-texto">"${item.comentario}"</p>
+            </div>
+          `).join('');
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Erro ao carregar avaliações públicas:", err);
+  }
+}
+
 // Função auxiliar para resetar o select de horários
 function limparHorarios() {
   const selectHorarios = document.getElementById('horario');
@@ -957,7 +999,8 @@ document.addEventListener("DOMContentLoaded", () => {
   carregarBanners();
   carregarServicos();
   carregarAgendamentos();
-  carregarContato(); 
+  carregarAvaliacoesPublicas();
+  carregarContato();
   inicializarCalendario(); 
 
   // NOVO: Quando o usuário trocar o serviço no select, reinicia o calendário e limpa data/horário

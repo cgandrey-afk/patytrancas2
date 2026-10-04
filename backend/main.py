@@ -236,6 +236,11 @@ def avaliar_agendamento_rota(req: AvaliacaoRequest):
         return {"mensagem": "Avaliação enviada com sucesso! Muito obrigado!"}
     raise HTTPException(status_code=500, detail="Erro ao salvar avaliação.")
 
+# --- BUSCA AVALIAÇÕES E MÉDIAS PÚBLICAS PARA O SITE ---
+@app.get("/api/avaliacoes/publicas")
+def obter_avaliacoes_publicas():
+    return fb.buscar_avaliacoes_publicas()
+
 @app.delete("/api/agendamentos/{user_id}/{doc_id}")
 def deletar_agendamento(user_id: str, doc_id: str):
     fb.deletar_agendamento(doc_id)

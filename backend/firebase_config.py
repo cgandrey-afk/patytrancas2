@@ -797,3 +797,51 @@ def filtrar_horarios_iniciais_sequenciais(horarios_disponiveis: list, duracao_ho
 def tem_espaco_consecutivo(horarios_disponiveis: list, duracao_horas: float):
     resultado = len(filtrar_horarios_iniciais_sequenciais(horarios_disponiveis, duracao_horas)) > 0
     return resultado
+
+def buscar_avaliacoes_publicas():
+    try:
+        docs = db.collection_group("horarios").stream()
+        comentarios_aprovados = []
+        todas_estrelas_tranca = []
+        todas_estrelas_tpexc = []
+
+        for doc in docs:
+            d = doc.to_dict()
+            st_tranca = d.get("stars_tranca", 0)
+            st_tpexc = d.get("stars_tpexc", 0)
+            sugestao = d.get("sugestao_serv", "")
+            publicado = d.get("publicado", False) or d.get("aprovado", False)
+
+            if st_tranca > 0:
+                todas_estrelas_tranca.append(st_tranca)
+            if st_tpexc > 0:
+                todas_estrelas_tpexc.append(st_tpexc)
+
+            if publicado and sugestao and sugestao.strip():
+                comentarios_aprovados.append({
+                    "cliente_nome": d.get("cliente_nome", "Cliente"),
+                    "servico": d.get("servico", "Trança"),
+                    "stars_tranca": st_tranca,
+                    "stars_tpexc": st_tpexc,
+                    "comentario": sugestao,
+                    "data": d.get("data_agendamento", "")
+                })
+
+        media_tranca = round(sum(todas_estrelas_tranca) / len(todas_estrelas_tranca), 1) if todas_estrelas_tranca else 5.0
+        media_tpexc = round(sum(todas_estrelas_tpexc) / len(todas_estrelas_tpexc), 1) if todas_estrelas_tpexc else 5.0
+        total_avaliacoes = max(len(todas_estrelas_tranca), len(todas_estrelas_tpexc))
+
+        return {
+            "media_tranca": media_tranca,
+            "media_tpexc": media_tpexc,
+            "total_avaliacoes": total_avaliacoes,
+            "comentarios": comentarios_aprovados
+        }
+    except Exception as e:
+        print(f"Erro ao buscar avaliações públicas: {e}")
+        return {
+            "media_tranca": 5.0,
+            "media_tpexc": 5.0,
+            "total_avaliacoes": 0,
+            "comentarios": []
+        }
