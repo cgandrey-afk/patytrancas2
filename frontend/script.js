@@ -102,14 +102,26 @@ let categoriaFiltroAtual = 'todas';
 
 // Busca a lista de favoritos do usuário
 async function carregarFavoritos() {
+  // 1. Tenta carregar do localStorage do navegador para carregamento instantâneo
+  const localFavs = localStorage.getItem('paty_trancas_favoritos');
+  if (localFavs) {
+    try {
+      meusFavoritos = JSON.parse(localFavs) || [];
+    } catch (_) {}
+  }
+
+  // 2. Sincroniza com o banco de dados Firebase no servidor
   try {
     const res = await fetch(`${API_URL}/api/favoritos/${MEU_USER_ID}`);
     if (res.ok) {
       const data = await res.json();
-      meusFavoritos = data.favoritos || [];
+      if (Array.isArray(data.favoritos)) {
+        meusFavoritos = data.favoritos;
+        localStorage.setItem('paty_trancas_favoritos', JSON.stringify(meusFavoritos));
+      }
     }
   } catch (err) {
-    console.error("Erro ao carregar favoritos:", err);
+    console.error("Erro ao carregar favoritos do servidor:", err);
   }
 }
 
@@ -123,16 +135,28 @@ async function toggleFavorito(event, servicoNome) {
     meusFavoritos.push(servicoNome);
   }
 
+  // Grava imediatamente no navegador do cliente
+  localStorage.setItem('paty_trancas_favoritos', JSON.stringify(meusFavoritos));
+
+  // Re-renderiza a tela com o estado do coração atualizado
   filtrarServicos();
 
+  // Envia para o servidor/Firebase em segundo plano
   try {
-    await fetch(`${API_URL}/api/favoritos/toggle`, {
+    const res = await fetch(`${API_URL}/api/favoritos/toggle`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: MEU_USER_ID, servico_nome: servicoNome })
     });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.favoritos)) {
+        meusFavoritos = data.favoritos;
+        localStorage.setItem('paty_trancas_favoritos', JSON.stringify(meusFavoritos));
+      }
+    }
   } catch (err) {
-    console.error("Erro ao alternar favorito:", err);
+    console.error("Erro ao alternar favorito no servidor:", err);
   }
 }
 
