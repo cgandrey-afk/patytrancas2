@@ -97,13 +97,70 @@ async function carregarBanners() {
 }
 
 let listaServicosGlobal = [];
+let meusFavoritos = [];
+let categoriaFiltroAtual = 'todas';
+
+// Busca a lista de favoritos do usuário
+async function carregarFavoritos() {
+  try {
+    const res = await fetch(`${API_URL}/api/favoritos/${MEU_USER_ID}`);
+    if (res.ok) {
+      const data = await res.json();
+      meusFavoritos = data.favoritos || [];
+    }
+  } catch (err) {
+    console.error("Erro ao carregar favoritos:", err);
+  }
+}
+
+// Marca/Desmarca um serviço como favorito
+async function toggleFavorito(event, servicoNome) {
+  if (event) event.stopPropagation();
+
+  if (meusFavoritos.includes(servicoNome)) {
+    meusFavoritos = meusFavoritos.filter(f => f !== servicoNome);
+  } else {
+    meusFavoritos.push(servicoNome);
+  }
+
+  filtrarServicos();
+
+  try {
+    await fetch(`${API_URL}/api/favoritos/toggle`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: MEU_USER_ID, servico_nome: servicoNome })
+    });
+  } catch (err) {
+    console.error("Erro ao alternar favorito:", err);
+  }
+}
+
+// Alterna a exibição dos botões de filtro
+function toggleFiltrosOpcoes() {
+  const container = document.getElementById('filtroOpcoesContainer');
+  if (container) {
+    container.style.display = container.style.display === 'none' ? 'flex' : 'none';
+  }
+}
+
+// Seleciona uma categoria de filtro
+function selecionarCategoriaFiltro(categoria, el) {
+  categoriaFiltroAtual = categoria;
+
+  const chips = document.querySelectorAll('.chip-filtro');
+  chips.forEach(chip => chip.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  filtrarServicos();
+}
 
 // Busca serviços no banco e preenche a tela + o select do formulário
 async function carregarServicos() {
-  const container = document.getElementById('gridServicos');
   const selectServico = document.getElementById('servico');
 
   try {
+    await carregarFavoritos();
     const res = await fetch(`${API_URL}/api/servicos`);
     if (res.ok) {
       listaServicosGlobal = await res.json();
@@ -136,11 +193,17 @@ function renderizarGridServicos(servicos) {
   }
 
   container.innerHTML = servicos.map((item) => {
-    // Mapeia o índice original do serviço para manter o modal correto
     const indexOriginal = listaServicosGlobal.findIndex(s => s.nome === item.nome);
+    const isFav = meusFavoritos.includes(item.nome);
+
     return `
       <div class="card-servico" onclick="abrirModalServico(${indexOriginal})">
-        <h3>${item.nome}</h3>
+        <div class="card-servico-header">
+          <h3>${item.nome}</h3>
+          <button class="btn-heart-favorite" onclick="toggleFavorito(event, '${item.nome}')" title="Favoritar">
+            <i class="${isFav ? 'fas fa-heart active' : 'far fa-heart'}"></i>
+          </button>
+        </div>
         <img src="${item.foto_url}" alt="${item.nome}" class="card-servico-img">
         <p>${item.descricao_curta}</p>
 
@@ -155,16 +218,28 @@ function renderizarGridServicos(servicos) {
   }).join('');
 }
 
-// Função para filtrar os serviços em tempo real enquanto digita
+// Função para filtrar os serviços em tempo real
 function filtrarServicos() {
   const input = document.getElementById('inputBuscaServico');
-  if (!input) return;
-  const termo = input.value.toLowerCase().trim();
+  const termo = input ? input.value.toLowerCase().trim() : '';
 
   const filtrados = listaServicosGlobal.filter(item => {
     const nome = (item.nome || '').toLowerCase();
     const desc = (item.descricao_curta || '').toLowerCase();
-    return nome.includes(termo) || desc.includes(termo);
+    const cat = (item.categoria || '').toLowerCase();
+
+    const bateTexto = !termo || nome.includes(termo) || desc.includes(termo);
+
+    let bateCategoria = true;
+    if (categoriaFiltroAtual === 'feminina') {
+      bateCategoria = cat.includes('feminin') || nome.includes('feminin') || !cat.includes('masculin');
+    } else if (categoriaFiltroAtual === 'masculina') {
+      bateCategoria = cat.includes('masculin') || nome.includes('masculin') || desc.includes('masculin') || desc.includes('homem');
+    } else if (categoriaFiltroAtual === 'favorito') {
+      bateCategoria = meusFavoritos.includes(item.nome);
+    }
+
+    return bateTexto && bateCategoria;
   });
 
   renderizarGridServicos(filtrados);

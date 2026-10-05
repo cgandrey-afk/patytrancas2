@@ -135,6 +135,10 @@ class AvaliacaoRequest(BaseModel):
     stars_tranca: int
     sugestao_serv: str
 
+class FavoritoRequest(BaseModel):
+    user_id: str
+    servico_nome: str
+
 # -------------------------------------------------------------
 # ROTAS DA API
 # -------------------------------------------------------------
@@ -239,6 +243,17 @@ def avaliar_agendamento_rota(req: AvaliacaoRequest):
 # --- BUSCA AVALIAÇÕES E MÉDIAS PÚBLICAS PARA O SITE ---
 @app.get("/api/avaliacoes/publicas")
 def obter_avaliacoes_publicas():
+    return fb.buscar_avaliacoes_publicas()
+
+# --- FAVORITOS DO USUÁRIO ---
+@app.get("/api/favoritos/{user_id}")
+def obter_favoritos_rota(user_id: str):
+    return {"favoritos": fb.obter_favoritos_db(user_id)}
+
+@app.post("/api/favoritos/toggle")
+def toggle_favorito_rota(req: FavoritoRequest):
+    novos_favs = fb.toggle_favorito_db(req.user_id, req.servico_nome)
+    return {"favoritos": novos_favs}
     return fb.buscar_avaliacoes_publicas()
 
 @app.delete("/api/agendamentos/{user_id}/{doc_id}")
