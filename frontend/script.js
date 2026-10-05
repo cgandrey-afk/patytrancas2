@@ -1130,6 +1130,36 @@ function limparHorarios() {
   }
 }
 
+// Preenche automaticamente Nome e Telefone do usuário se já cadastrados
+async function carregarDadosUsuario() {
+  try {
+    const res = await fetch(`${API_URL}/api/usuario/${MEU_USER_ID}`);
+    if (res.ok) {
+      const data = await res.json();
+      const inputNome = document.getElementById('nome');
+      const inputTelefone = document.getElementById('telefone');
+
+      if (data.cliente_nome && inputNome && !inputNome.value) {
+        inputNome.value = data.cliente_nome;
+      }
+
+      if (data.cliente_telefone && inputTelefone && !inputTelefone.value) {
+        let v = data.cliente_telefone.replace(/\D/g, '');
+        if (v.length > 10) {
+          v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+        } else if (v.length > 6) {
+          v = v.replace(/^(\d{2})(\d{4})(\d{0,4})$/, '($1) $2-$3');
+        } else if (v.length > 2) {
+          v = v.replace(/^(\d{2})(\d{0,5})$/, '($1) $2');
+        }
+        inputTelefone.value = v;
+      }
+    }
+  } catch (err) {
+    console.error("Erro ao carregar dados do usuário:", err);
+  }
+}
+
 // INICIALIZAÇÃO ÚNICA AO CARREGAR O DOCUMENTO
 document.addEventListener("DOMContentLoaded", () => {
   resetarTemporizadorInatividade();
@@ -1139,7 +1169,8 @@ document.addEventListener("DOMContentLoaded", () => {
   carregarAgendamentos();
   carregarAvaliacoesPublicas();
   carregarContato();
-  inicializarCalendario(); 
+  carregarDadosUsuario();
+  inicializarCalendario();
 
   // NOVO: Quando o usuário trocar o serviço no select, reinicia o calendário e limpa data/horário
   const selectServico = document.getElementById('servico');

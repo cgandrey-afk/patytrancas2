@@ -254,7 +254,11 @@ def obter_favoritos_rota(user_id: str):
 def toggle_favorito_rota(req: FavoritoRequest):
     novos_favs = fb.toggle_favorito_db(req.user_id, req.servico_nome)
     return {"favoritos": novos_favs}
-    return fb.buscar_avaliacoes_publicas()
+
+# --- DADOS DO USUÁRIO (NOME E TELEFONE PREENCHIDOS) ---
+@app.get("/api/usuario/{user_id}")
+def obter_usuario_rota(user_id: str):
+    return fb.obter_usuario_db(user_id)
 
 @app.delete("/api/agendamentos/{user_id}/{doc_id}")
 def deletar_agendamento(user_id: str, doc_id: str):

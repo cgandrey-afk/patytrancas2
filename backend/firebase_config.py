@@ -877,3 +877,17 @@ def toggle_favorito_db(user_id: str, servico_nome: str):
     except Exception as e:
         print(f"Erro ao alternar favorito: {e}")
         return []
+
+def obter_usuario_db(user_id: str):
+    try:
+        doc = db.collection("usuarios").document(user_id).get()
+        if doc.exists:
+            d = doc.to_dict()
+            return {
+                "cliente_nome": d.get("cliente_nome", ""),
+                "cliente_telefone": d.get("cliente_telefone", "")
+            }
+        return {"cliente_nome": "", "cliente_telefone": ""}
+    except Exception as e:
+        print(f"Erro ao obter dados do usuário: {e}")
+        return {"cliente_nome": "", "cliente_telefone": ""}
