@@ -268,6 +268,7 @@ function filtrarServicos() {
 
   const temFeminina = categoriasFiltroAtivas.has('feminina');
   const temMasculina = categoriasFiltroAtivas.has('masculina');
+  const temUnissex = categoriasFiltroAtivas.has('unissex');
   const temFavorito = categoriasFiltroAtivas.has('favorito');
 
   const filtrados = listaServicosGlobal.filter(item => {
@@ -278,19 +279,20 @@ function filtrarServicos() {
     // 1. Filtro por Busca de Texto
     const bateTexto = !termo || nome.includes(termo) || desc.includes(termo);
 
-    // 2. Filtro por Gênero (se Masculino e Feminino estiverem ambos ativos, mostra ambos!)
+    // 2. Filtro por Gênero
     let bateGenero = true;
-    if (temFeminina || temMasculina) {
+    if (temFeminina || temMasculina || temUnissex) {
       const eFeminina = cat.includes('feminin') || cat.includes('unissex') || nome.includes('feminin') || (!cat.includes('masculin') && !nome.includes('masculin') && !desc.includes('masculin') && !desc.includes('homem'));
       const eMasculina = cat.includes('masculin') || cat.includes('unissex') || nome.includes('masculin') || desc.includes('masculin') || desc.includes('homem');
+      const eUnissex = cat.includes('unissex') || (eFeminina && eMasculina);
 
-      if (temFeminina && temMasculina) {
-        bateGenero = eFeminina || eMasculina; // Mostra tudo que for Feminino OU Masculino
-      } else if (temFeminina) {
-        bateGenero = eFeminina;
-      } else if (temMasculina) {
-        bateGenero = eMasculina;
-      }
+      const generosAtivos = [];
+      if (temFeminina) generosAtivos.push(eFeminina);
+      if (temMasculina) generosAtivos.push(eMasculina);
+      if (temUnissex) generosAtivos.push(eUnissex);
+
+      // União (OU) entre gêneros selecionados
+      bateGenero = generosAtivos.some(cond => cond === true);
     }
 
     // 3. Filtro por Favorito (Interseção E)
