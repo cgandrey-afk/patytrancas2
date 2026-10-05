@@ -166,6 +166,10 @@ function toggleFiltrosOpcoes() {
 
 // Seleciona/Deseleciona múltiplas categorias de filtro
 function selecionarCategoriaFiltro(categoria, el) {
+  if (el && typeof el.blur === 'function') {
+    el.blur(); // Remove o foco nativo do navegador para a cor do botão atualizar instantaneamente
+  }
+
   const chipTodas = document.querySelector('.chip-filtro[data-categoria="todas"]');
 
   if (categoria === 'todas') {
@@ -257,10 +261,14 @@ function renderizarGridServicos(servicos) {
   }).join('');
 }
 
-// Função para filtrar os serviços em tempo real com suporte a múltipla seleção
+// Função para filtrar os serviços em tempo real com suporte a lógica de gênero e favoritos
 function filtrarServicos() {
   const input = document.getElementById('inputBuscaServico');
   const termo = input ? input.value.toLowerCase().trim() : '';
+
+  const temFeminina = categoriasFiltroAtivas.has('feminina');
+  const temMasculina = categoriasFiltroAtivas.has('masculina');
+  const temFavorito = categoriasFiltroAtivas.has('favorito');
 
   const filtrados = listaServicosGlobal.filter(item => {
     const nome = (item.nome || '').toLowerCase();
@@ -270,25 +278,28 @@ function filtrarServicos() {
     // 1. Filtro por Busca de Texto
     const bateTexto = !termo || nome.includes(termo) || desc.includes(termo);
 
-    // 2. Filtro Combinado Múltiplo (todas as categorias ativas devem bater!)
-    let bateTodasCategorias = true;
-
-    if (categoriasFiltroAtivas.has('feminina')) {
-      const eFeminina = cat.includes('feminin') || nome.includes('feminin') || (!cat.includes('masculin') && !nome.includes('masculin'));
-      if (!eFeminina) bateTodasCategorias = false;
-    }
-
-    if (categoriasFiltroAtivas.has('masculina')) {
+    // 2. Filtro por Gênero (se Masculino e Feminino estiverem ambos ativos, mostra ambos!)
+    let bateGenero = true;
+    if (temFeminina || temMasculina) {
+      const eFeminina = cat.includes('feminin') || nome.includes('feminin') || (!cat.includes('masculin') && !nome.includes('masculin') && !desc.includes('masculin') && !desc.includes('homem'));
       const eMasculina = cat.includes('masculin') || nome.includes('masculin') || desc.includes('masculin') || desc.includes('homem');
-      if (!eMasculina) bateTodasCategorias = false;
+
+      if (temFeminina && temMasculina) {
+        bateGenero = eFeminina || eMasculina; // Mostra tudo que for Feminino OU Masculino
+      } else if (temFeminina) {
+        bateGenero = eFeminina;
+      } else if (temMasculina) {
+        bateGenero = eMasculina;
+      }
     }
 
-    if (categoriasFiltroAtivas.has('favorito')) {
-      const eFavorito = meusFavoritos.includes(item.nome);
-      if (!eFavorito) bateTodasCategorias = false;
+    // 3. Filtro por Favorito (Interseção E)
+    let bateFavorito = true;
+    if (temFavorito) {
+      bateFavorito = meusFavoritos.includes(item.nome);
     }
 
-    return bateTexto && bateTodasCategorias;
+    return bateTexto && bateGenero && bateFavorito;
   });
 
   renderizarGridServicos(filtrados);

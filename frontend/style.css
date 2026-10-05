@@ -270,13 +270,20 @@ h1, h2, h3 {
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  outline: none;
+  transition: all 0.15s ease;
 }
 
-.chip-filtro:hover, .chip-filtro.active {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
+.chip-filtro.active {
+  background: var(--primary) !important;
+  color: white !important;
+  border-color: var(--primary) !important;
+}
+
+.chip-filtro:not(.active) {
+  background: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border) !important;
 }
 
 /* Header do Card de Serviço e Ícone de Coração */
