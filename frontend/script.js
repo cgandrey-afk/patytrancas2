@@ -281,8 +281,8 @@ function filtrarServicos() {
     // 2. Filtro por Gênero (se Masculino e Feminino estiverem ambos ativos, mostra ambos!)
     let bateGenero = true;
     if (temFeminina || temMasculina) {
-      const eFeminina = cat.includes('feminin') || nome.includes('feminin') || (!cat.includes('masculin') && !nome.includes('masculin') && !desc.includes('masculin') && !desc.includes('homem'));
-      const eMasculina = cat.includes('masculin') || nome.includes('masculin') || desc.includes('masculin') || desc.includes('homem');
+      const eFeminina = cat.includes('feminin') || cat.includes('unissex') || nome.includes('feminin') || (!cat.includes('masculin') && !nome.includes('masculin') && !desc.includes('masculin') && !desc.includes('homem'));
+      const eMasculina = cat.includes('masculin') || cat.includes('unissex') || nome.includes('masculin') || desc.includes('masculin') || desc.includes('homem');
 
       if (temFeminina && temMasculina) {
         bateGenero = eFeminina || eMasculina; // Mostra tudo que for Feminino OU Masculino
