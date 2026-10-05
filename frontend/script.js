@@ -98,7 +98,7 @@ async function carregarBanners() {
 
 let listaServicosGlobal = [];
 let meusFavoritos = [];
-let categoriaFiltroAtual = 'todas';
+let categoriasFiltroAtivas = new Set(); // Guarda as categorias selecionadas (ex: 'masculina', 'favorito')
 
 // Busca a lista de favoritos do usuário
 async function carregarFavoritos() {
@@ -135,13 +135,9 @@ async function toggleFavorito(event, servicoNome) {
     meusFavoritos.push(servicoNome);
   }
 
-  // Grava imediatamente no navegador do cliente
   localStorage.setItem('paty_trancas_favoritos', JSON.stringify(meusFavoritos));
-
-  // Re-renderiza a tela com o estado do coração atualizado
   filtrarServicos();
 
-  // Envia para o servidor/Firebase em segundo plano
   try {
     const res = await fetch(`${API_URL}/api/favoritos/toggle`, {
       method: "POST",
@@ -168,13 +164,32 @@ function toggleFiltrosOpcoes() {
   }
 }
 
-// Seleciona uma categoria de filtro
+// Seleciona/Deseleciona múltiplas categorias de filtro
 function selecionarCategoriaFiltro(categoria, el) {
-  categoriaFiltroAtual = categoria;
+  const chipTodas = document.querySelector('.chip-filtro[data-categoria="todas"]');
 
-  const chips = document.querySelectorAll('.chip-filtro');
-  chips.forEach(chip => chip.classList.remove('active'));
-  if (el) el.classList.add('active');
+  if (categoria === 'todas') {
+    // Se clicou em "Todas": limpa todas as seleções ativas
+    categoriasFiltroAtivas.clear();
+    document.querySelectorAll('.chip-filtro').forEach(chip => chip.classList.remove('active'));
+    if (chipTodas) chipTodas.classList.add('active');
+  } else {
+    // Se clicou em uma categoria específica (feminina, masculina, favorito)
+    if (chipTodas) chipTodas.classList.remove('active');
+
+    if (categoriasFiltroAtivas.has(categoria)) {
+      categoriasFiltroAtivas.delete(categoria);
+      if (el) el.classList.remove('active');
+    } else {
+      categoriasFiltroAtivas.add(categoria);
+      if (el) el.classList.add('active');
+    }
+
+    // Se desmarcou tudo, ativa "Todas" automaticamente
+    if (categoriasFiltroAtivas.size === 0) {
+      if (chipTodas) chipTodas.classList.add('active');
+    }
+  }
 
   filtrarServicos();
 }
@@ -242,7 +257,7 @@ function renderizarGridServicos(servicos) {
   }).join('');
 }
 
-// Função para filtrar os serviços em tempo real
+// Função para filtrar os serviços em tempo real com suporte a múltipla seleção
 function filtrarServicos() {
   const input = document.getElementById('inputBuscaServico');
   const termo = input ? input.value.toLowerCase().trim() : '';
@@ -252,18 +267,28 @@ function filtrarServicos() {
     const desc = (item.descricao_curta || '').toLowerCase();
     const cat = (item.categoria || '').toLowerCase();
 
+    // 1. Filtro por Busca de Texto
     const bateTexto = !termo || nome.includes(termo) || desc.includes(termo);
 
-    let bateCategoria = true;
-    if (categoriaFiltroAtual === 'feminina') {
-      bateCategoria = cat.includes('feminin') || nome.includes('feminin') || !cat.includes('masculin');
-    } else if (categoriaFiltroAtual === 'masculina') {
-      bateCategoria = cat.includes('masculin') || nome.includes('masculin') || desc.includes('masculin') || desc.includes('homem');
-    } else if (categoriaFiltroAtual === 'favorito') {
-      bateCategoria = meusFavoritos.includes(item.nome);
+    // 2. Filtro Combinado Múltiplo (todas as categorias ativas devem bater!)
+    let bateTodasCategorias = true;
+
+    if (categoriasFiltroAtivas.has('feminina')) {
+      const eFeminina = cat.includes('feminin') || nome.includes('feminin') || (!cat.includes('masculin') && !nome.includes('masculin'));
+      if (!eFeminina) bateTodasCategorias = false;
     }
 
-    return bateTexto && bateCategoria;
+    if (categoriasFiltroAtivas.has('masculina')) {
+      const eMasculina = cat.includes('masculin') || nome.includes('masculin') || desc.includes('masculin') || desc.includes('homem');
+      if (!eMasculina) bateTodasCategorias = false;
+    }
+
+    if (categoriasFiltroAtivas.has('favorito')) {
+      const eFavorito = meusFavoritos.includes(item.nome);
+      if (!eFavorito) bateTodasCategorias = false;
+    }
+
+    return bateTexto && bateTodasCategorias;
   });
 
   renderizarGridServicos(filtrados);
