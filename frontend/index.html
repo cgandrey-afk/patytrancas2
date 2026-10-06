@@ -255,8 +255,20 @@
   <section id="meus-agendamentos" class="section-container bg-highlight">
     <div class="section-title">
       <h2>Agendamentos Salvos</h2>
-      <p>Consulte os horários confirmados no sistema.</p>
-      <button class="btn-secondary" onclick="carregarAgendamentos()" style="margin-top: 15px;">🔄 Atualizar Lista</button>
+      <p>Consulte seus agendamentos ativos e o histórico completo.</p>
+
+      <!-- Abas Agendamentos vs Histórico -->
+      <div class="agendamentos-tabs-container">
+        <button class="agendamento-tab active" data-tab="agendamentos" onclick="selecionarAbaAgendamentos('agendamentos', this)">
+          📅 Agendamentos
+        </button>
+        <button class="agendamento-tab" data-tab="historico" onclick="selecionarAbaAgendamentos('historico', this)">
+          📜 Histórico
+        </button>
+        <button class="btn-secondary" onclick="carregarAgendamentos()" title="Atualizar Lista" style="padding: 8px 16px; border-radius: 20px;">
+          🔄
+        </button>
+      </div>
     </div>
 
     <div id="listaAgendamentos" class="agendamentos-grid">

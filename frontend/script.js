@@ -514,6 +514,20 @@ function agendamentoJaPassou(dataStr, horarioStr) {
   }
 }
 
+let abaAgendamentosAtual = 'agendamentos';
+let modalAvaliacaoJaAbertoAut = false;
+
+function selecionarAbaAgendamentos(aba, el) {
+  if (el && typeof el.blur === 'function') el.blur();
+  abaAgendamentosAtual = aba;
+
+  const tabs = document.querySelectorAll('.agendamento-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  carregarAgendamentos();
+}
+
 async function carregarAgendamentos() {
   const container = document.getElementById('listaAgendamentos');
   if (!container) return;
@@ -525,7 +539,37 @@ async function carregarAgendamentos() {
     const agendamentos = await res.json();
 
     if (res.ok && Array.isArray(agendamentos) && agendamentos.length > 0) {
-      container.innerHTML = agendamentos.map(item => {
+      // 1. Abre pop-up com fundo desfocado se houver atendimento concluído pendente de avaliação
+      const pendenteAvaliacao = agendamentos.find(item => item.status_conclusao === true && !item.avaliacao_feita);
+      if (pendenteAvaliacao && !modalAvaliacaoJaAbertoAut) {
+        modalAvaliacaoJaAbertoAut = true;
+        setTimeout(() => {
+          abrirModalAvaliacao(pendenteAvaliacao.id);
+        }, 800);
+      }
+
+      // 2. Filtra por aba (Agendamentos x Histórico)
+      const agendamentosFiltrados = agendamentos.filter(item => {
+        const jaPassou = agendamentoJaPassou(item.data_agendamento, item.horario);
+        const stLower = (item.status || "").toString().toLowerCase().trim();
+        const isCancelado = stLower === "cancelado";
+
+        if (abaAgendamentosAtual === 'agendamentos') {
+          return !jaPassou && !isCancelado;
+        } else {
+          return true; // Histórico mostra tudo
+        }
+      });
+
+      if (agendamentosFiltrados.length === 0) {
+        const msgVazia = abaAgendamentosAtual === 'agendamentos'
+          ? "Nenhum agendamento futuro encontrado."
+          : "Nenhum histórico de agendamentos encontrado.";
+        container.innerHTML = `<p style='color:var(--text-muted); text-align:center;'>${msgVazia}</p>`;
+        return;
+      }
+
+      container.innerHTML = agendamentosFiltrados.map(item => {
         const servicoEncontrado = listaServicosGlobal.find(s => s.nome === item.servico);
         const precoTexto = servicoEncontrado ? servicoEncontrado.preco : (item.preco || '');
         const stLower = (item.status || "").toString().toLowerCase().trim();
