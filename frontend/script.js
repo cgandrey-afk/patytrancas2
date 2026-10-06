@@ -95,15 +95,6 @@ async function carregarBanners() {
     console.error("Erro ao carregar banners:", err);
   }
 }
-  if (Math.abs(diferenca) > 40 && listaBannersGlobal.length > 1) {
-    if (diferenca < 0) {
-      bannerIndexAtual = (bannerIndexAtual + 1) % listaBannersGlobal.length;
-    } else {
-      bannerIndexAtual = (bannerIndexAtual - 1 + listaBannersGlobal.length) % listaBannersGlobal.length;
-    }
-    exibirBannerIndex(bannerIndexAtual);
-  }
-}
 
 let listaServicosGlobal = [];
 let meusFavoritos = [];
