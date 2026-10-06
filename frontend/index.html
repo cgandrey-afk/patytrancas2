@@ -39,17 +39,19 @@
     </div>
   </header>
 
-  <!-- Hero Section com Banners Responsivos -->
+  <!-- Hero Section com Carrossel de Banners Dinâmicos -->
   <section id="home" class="hero">
-  <div class="hero-container">
-    <a id="bannerLink" href="#agendar" class="banner-link">
-      <picture>
-        <source id="bannerMobileSource" media="(max-width: 768px)" srcset="">
-        <img id="bannerDesktopImg" src="" alt="Paty Tranças - Banner Principal" class="hero-banner-img">
-      </picture>
-    </a>
-  </div>
-</section>
+    <div class="hero-container" id="bannerCarouselContainer">
+      <a id="bannerLink" href="#agendar" class="banner-link" onclick="clicarBannerAtual(event)">
+        <picture>
+          <source id="bannerMobileSource" media="(max-width: 768px)" srcset="">
+          <img id="bannerDesktopImg" src="" alt="Paty Tranças - Banner Principal" class="hero-banner-img">
+        </picture>
+      </a>
+      <!-- Indicadores em Pontos (.) do Carrossel -->
+      <div id="bannerDotsContainer" class="banner-dots-group"></div>
+    </div>
+  </section>
 
   <!-- Serviços & Catálogo -->
 	<section id="servicos" class="section-container">

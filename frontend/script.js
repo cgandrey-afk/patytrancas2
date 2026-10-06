@@ -74,25 +74,117 @@ async function carregarLogo() {
   }
 }
 
-// Busca os banners dinâmicos no servidor
+let listaBannersGlobal = [];
+let bannerIndexAtual = 0;
+let bannerTimerLoop = null;
+
+// Busca os banners dinâmicos no servidor e inicia o carrossel
 async function carregarBanners() {
   try {
     const res = await fetch(`${API_URL}/api/banners`);
     if (res.ok) {
       const data = await res.json();
       
-      if (data && data.ativo !== false) {
-        const desktopImg = document.getElementById('bannerDesktopImg');
-        const mobileSource = document.getElementById('bannerMobileSource');
-        const bannerLink = document.getElementById('bannerLink');
+      if (data && data.ativo !== false && Array.isArray(data.banners) && data.banners.length > 0) {
+        listaBannersGlobal = data.banners;
+        const tempoSegundos = data.tempo_segundos || 5;
 
-        if (desktopImg && data.desktop_url) desktopImg.src = data.desktop_url;
-        if (mobileSource && data.mobile_url) mobileSource.srcset = data.mobile_url;
-        if (bannerLink && data.link) bannerLink.href = data.link;
+        // Renderiza o primeiro banner e os pontos
+        exibirBannerIndex(0);
+        renderizarDotsBanners();
+        iniciarGestosArrasteBanner();
+
+        // Inicia o loop automático se houver mais de 1 banner
+        if (listaBannersGlobal.length > 1) {
+          clearInterval(bannerTimerLoop);
+          bannerTimerLoop = setInterval(() => {
+            bannerIndexAtual = (bannerIndexAtual + 1) % listaBannersGlobal.length;
+            exibirBannerIndex(bannerIndexAtual);
+          }, tempoSegundos * 1000);
+        }
       }
     }
   } catch (err) {
     console.error("Erro ao carregar banners:", err);
+  }
+}
+
+function exibirBannerIndex(index) {
+  if (!listaBannersGlobal || listaBannersGlobal.length === 0) return;
+  bannerIndexAtual = index;
+  const item = listaBannersGlobal[index];
+  if (!item) return;
+
+  const desktopImg = document.getElementById('bannerDesktopImg');
+  const mobileSource = document.getElementById('bannerMobileSource');
+  const bannerLink = document.getElementById('bannerLink');
+
+  if (desktopImg) desktopImg.src = item.desktop_url || item.mobile_url || '';
+  if (mobileSource) mobileSource.srcset = item.mobile_url || item.desktop_url || '';
+  if (bannerLink) bannerLink.href = item.link || '#agendar';
+
+  // Atualiza ponto ativo (.)
+  const dots = document.querySelectorAll('.banner-dot');
+  dots.forEach((dot, idx) => {
+    if (idx === index) dot.classList.add('active');
+    else dot.classList.remove('active');
+  });
+}
+
+function renderizarDotsBanners() {
+  const container = document.getElementById('bannerDotsContainer');
+  if (!container) return;
+
+  if (listaBannersGlobal.length <= 1) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'flex';
+  container.innerHTML = listaBannersGlobal.map((_, idx) => `
+    <span class="banner-dot ${idx === 0 ? 'active' : ''}" onclick="mudarBannerManual(${idx})"></span>
+  `).join('');
+}
+
+function mudarBannerManual(idx) {
+  exibirBannerIndex(idx);
+}
+
+function clicarBannerAtual(event) {
+  const item = listaBannersGlobal[bannerIndexAtual];
+  if (item && item.servico_preencher) {
+    const selectServico = document.getElementById('servico');
+    if (selectServico) selectServico.value = item.servico_preencher;
+  }
+}
+
+// Gestos de Arraste (Touch / Drag) para passar ou voltar banners
+let touchStartX = 0;
+let touchEndX = 0;
+
+function iniciarGestosArrasteBanner() {
+  const container = document.getElementById('bannerCarouselContainer');
+  if (!container) return;
+
+  container.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+
+  container.addEventListener('touchend', e => {
+    touchEndX = e.changedTouches[0].screenX;
+    tratarGestoArraste();
+  }, { passive: true });
+}
+
+function tratarGestoArraste() {
+  const diferenca = touchEndX - touchStartX;
+  if (Math.abs(diferenca) > 40 && listaBannersGlobal.length > 1) {
+    if (diferenca < 0) {
+      bannerIndexAtual = (bannerIndexAtual + 1) % listaBannersGlobal.length;
+    } else {
+      bannerIndexAtual = (bannerIndexAtual - 1 + listaBannersGlobal.length) % listaBannersGlobal.length;
+    }
+    exibirBannerIndex(bannerIndexAtual);
   }
 }
 
