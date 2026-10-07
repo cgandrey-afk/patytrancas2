@@ -74,26 +74,176 @@ async function carregarLogo() {
   }
 }
 
-// Busca os banners dinâmicos no servidor
+let bannersGlobal = [];
+let bannerIndexAtual = 0;
+let bannerTimerGlobal = null;
+
+// Busca os banners dinâmicos no servidor e gerencia o carrossel
 async function carregarBanners() {
   try {
     const res = await fetch(`${API_URL}/api/banners`);
     if (res.ok) {
       const data = await res.json();
       
-      if (data && data.ativo !== false) {
-        const desktopImg = document.getElementById('bannerDesktopImg');
-        const mobileSource = document.getElementById('bannerMobileSource');
-        const bannerLink = document.getElementById('bannerLink');
-
-        if (desktopImg && data.desktop_url) desktopImg.src = data.desktop_url;
-        if (mobileSource && data.mobile_url) mobileSource.srcset = data.mobile_url;
-        if (bannerLink && data.link) bannerLink.href = data.link;
+      if (!data || data.ativo === false) {
+        const heroSection = document.getElementById('home');
+        if (heroSection) heroSection.style.display = 'none';
+        return;
       }
+
+      if (Array.isArray(data.banners) && data.banners.length > 0) {
+        bannersGlobal = data.banners;
+      } else if (data.desktop_url) {
+        bannersGlobal = [{
+          desktop_url: data.desktop_url,
+          mobile_url: data.mobile_url || data.desktop_url,
+          link: data.link || '#agendar',
+          servico_preencher: ''
+        }];
+      }
+
+      if (bannersGlobal.length === 0) {
+        const heroSection = document.getElementById('home');
+        if (heroSection) heroSection.style.display = 'none';
+        return;
+      }
+
+      const tempoSegundos = data.tempo_segundos || 5;
+      iniciarCarrosselBanners(tempoSegundos);
     }
   } catch (err) {
     console.error("Erro ao carregar banners:", err);
   }
+}
+
+function iniciarCarrosselBanners(tempoSegundos) {
+  bannerIndexAtual = 0;
+
+  const prevBtn = document.getElementById('bannerPrevBtn');
+  const nextBtn = document.getElementById('bannerNextBtn');
+  const dotsContainer = document.getElementById('bannerDots');
+  const wrapper = document.getElementById('carouselWrapper');
+
+  if (bannersGlobal.length <= 1) {
+    if (prevBtn) prevBtn.style.display = 'none';
+    if (nextBtn) nextBtn.style.display = 'none';
+    if (dotsContainer) dotsContainer.style.display = 'none';
+  } else {
+    if (prevBtn) {
+      prevBtn.style.display = 'flex';
+      prevBtn.onclick = (e) => {
+        e.preventDefault();
+        mudarBanner(bannerIndexAtual - 1, tempoSegundos);
+      };
+    }
+    if (nextBtn) {
+      nextBtn.style.display = 'flex';
+      nextBtn.onclick = (e) => {
+        e.preventDefault();
+        mudarBanner(bannerIndexAtual + 1, tempoSegundos);
+      };
+    }
+  }
+
+  // Suporte a gestos Touch (Swipe no Mobile)
+  if (wrapper && !wrapper.dataset.swipeBound) {
+    wrapper.dataset.swipeBound = 'true';
+    let startX = 0;
+    let endX = 0;
+
+    wrapper.addEventListener('touchstart', (e) => {
+      startX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    wrapper.addEventListener('touchend', (e) => {
+      endX = e.changedTouches[0].screenX;
+      if (startX - endX > 40) {
+        mudarBanner(bannerIndexAtual + 1, tempoSegundos);
+      } else if (endX - startX > 40) {
+        mudarBanner(bannerIndexAtual - 1, tempoSegundos);
+      }
+    }, { passive: true });
+  }
+
+  renderizarDotsBanners(tempoSegundos);
+  exibirBannerAtual();
+  iniciarTimerCarrossel(tempoSegundos);
+}
+
+function renderizarDotsBanners(tempoSegundos) {
+  const dotsContainer = document.getElementById('bannerDots');
+  if (!dotsContainer) return;
+
+  dotsContainer.innerHTML = '';
+  if (bannersGlobal.length <= 1) {
+    dotsContainer.style.display = 'none';
+    return;
+  }
+
+  dotsContainer.style.display = 'flex';
+
+  bannersGlobal.forEach((_, idx) => {
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    dot.className = `carousel-dot ${idx === bannerIndexAtual ? 'active' : ''}`;
+    dot.setAttribute('aria-label', `Ir para o banner ${idx + 1}`);
+    dot.onclick = (e) => {
+      e.preventDefault();
+      mudarBanner(idx, tempoSegundos);
+    };
+    dotsContainer.appendChild(dot);
+  });
+}
+
+function mudarBanner(novoIndex, tempoSegundos) {
+  if (bannersGlobal.length === 0) return;
+
+  if (novoIndex < 0) {
+    bannerIndexAtual = bannersGlobal.length - 1;
+  } else if (novoIndex >= bannersGlobal.length) {
+    bannerIndexAtual = 0;
+  } else {
+    bannerIndexAtual = novoIndex;
+  }
+
+  exibirBannerAtual();
+  renderizarDotsBanners(tempoSegundos);
+  iniciarTimerCarrossel(tempoSegundos);
+}
+
+function exibirBannerAtual() {
+  const item = bannersGlobal[bannerIndexAtual];
+  if (!item) return;
+
+  const desktopImg = document.getElementById('bannerDesktopImg');
+  const mobileSource = document.getElementById('bannerMobileSource');
+  const bannerLink = document.getElementById('bannerLink');
+
+  if (desktopImg) desktopImg.src = item.desktop_url || item.mobile_url || '';
+  if (mobileSource) mobileSource.srcset = item.mobile_url || item.desktop_url || '';
+
+  if (bannerLink) {
+    bannerLink.href = item.link || '#agendar';
+    bannerLink.onclick = () => {
+      if (item.servico_preencher) {
+        const selectServico = document.getElementById('servico');
+        if (selectServico) {
+          selectServico.value = item.servico_preencher;
+          selectServico.dispatchEvent(new Event('change'));
+        }
+      }
+    };
+  }
+}
+
+function iniciarTimerCarrossel(tempoSegundos) {
+  if (bannerTimerGlobal) clearInterval(bannerTimerGlobal);
+  if (bannersGlobal.length <= 1) return;
+
+  const ms = (tempoSegundos || 5) * 1000;
+  bannerTimerGlobal = setInterval(() => {
+    mudarBanner(bannerIndexAtual + 1, tempoSegundos);
+  }, ms);
 }
 
 let listaServicosGlobal = [];

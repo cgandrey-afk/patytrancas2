@@ -39,17 +39,30 @@
     </div>
   </header>
 
-  <!-- Hero Section com Banners Responsivos -->
+  <!-- Hero Section com Banners Responsivos em Carrossel -->
   <section id="home" class="hero">
-  <div class="hero-container">
-    <a id="bannerLink" href="#agendar" class="banner-link">
-      <picture>
-        <source id="bannerMobileSource" media="(max-width: 768px)" srcset="">
-        <img id="bannerDesktopImg" src="" alt="Paty Tranças - Banner Principal" class="hero-banner-img">
-      </picture>
-    </a>
-  </div>
-</section>
+    <div class="hero-container">
+      <div class="carousel-wrapper" id="carouselWrapper">
+        <a id="bannerLink" href="#agendar" class="banner-link">
+          <picture>
+            <source id="bannerMobileSource" media="(max-width: 768px)" srcset="">
+            <img id="bannerDesktopImg" src="" alt="Paty Tranças - Banner Principal" class="hero-banner-img">
+          </picture>
+        </a>
+
+        <!-- Botões de Navegação (Setas) -->
+        <button type="button" class="carousel-arrow carousel-arrow-prev" id="bannerPrevBtn" aria-label="Banner anterior">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button type="button" class="carousel-arrow carousel-arrow-next" id="bannerNextBtn" aria-label="Próximo banner">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+
+        <!-- Indicadores (Bolinhas) -->
+        <div class="carousel-dots" id="bannerDots"></div>
+      </div>
+    </div>
+  </section>
 
   <!-- Serviços & Catálogo -->
 	<section id="servicos" class="section-container">

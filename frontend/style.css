@@ -133,6 +133,13 @@ h1, h2, h3 {
   padding: 0 20px;
 }
 
+.carousel-wrapper {
+  position: relative;
+  width: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
 .banner-link {
   display: block;
   text-decoration: none;
@@ -142,7 +149,7 @@ h1, h2, h3 {
 }
 
 .banner-link:hover {
-  transform: scale(1.005);
+  transform: scale(1.002);
 }
 
 .hero-banner-img {
@@ -151,6 +158,75 @@ h1, h2, h3 {
   display: block;
   border-radius: 20px;
   object-fit: cover;
+}
+
+/* Setas do Carrossel de Banners */
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.45);
+  color: #ffffff;
+  border: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+  opacity: 0.85;
+  font-size: 1.1rem;
+}
+
+.carousel-arrow:hover {
+  background: rgba(0, 0, 0, 0.8);
+  opacity: 1;
+  transform: translateY(-50%) scale(1.08);
+}
+
+.carousel-arrow-prev {
+  left: 14px;
+}
+
+.carousel-arrow-next {
+  right: 14px;
+}
+
+/* Indicadores (Bolinhas) */
+.carousel-dots {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 6px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+}
+
+.carousel-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.carousel-dot.active {
+  background: #ffffff;
+  transform: scale(1.15);
 }
 
 /* Containers das Seções */
