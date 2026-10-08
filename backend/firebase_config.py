@@ -3,7 +3,7 @@ import json
 import threading
 import firebase_admin
 import re
-from firebase_admin import credentials, firestore
+from firebase_admin import credentials, firestore, messaging
 from datetime import datetime, timedelta
 import pytz
 
@@ -24,6 +24,43 @@ if not firebase_admin._apps:
         firebase_admin.initialize_app(cred)
 
 db = firestore.client()
+
+def disparar_notificacao_push(titulo: str, corpo: str):
+    try:
+        docs = db.collection("configuracoes").document("push_tokens").collection("tokens").stream()
+        tokens = [doc.to_dict().get("token") for doc in docs if doc.to_dict().get("token")]
+
+        if not tokens:
+            user_docs = db.collection("usuarios").stream()
+            for u in user_docs:
+                fcm_list = u.to_dict().get("fcm_tokens", [])
+                for t in fcm_list:
+                    if t and t not in tokens:
+                        tokens.append(t)
+
+        if not tokens:
+            print("[PUSH] Nenhum token registrado para receber notificações.")
+            return
+
+        for token in set(tokens):
+            try:
+                message = messaging.Message(
+                    notification=messaging.Notification(
+                        title=titulo,
+                        body=corpo,
+                    ),
+                    data={
+                        "title": titulo,
+                        "body": corpo
+                    },
+                    token=token
+                )
+                messaging.send(message)
+                print(f"[PUSH] Notificação enviada para token: {token[:10]}...")
+            except Exception as e_tok:
+                print(f"[PUSH] Erro ao enviar para token: {e_tok}")
+    except Exception as e:
+        print(f"[PUSH] Erro ao disparar notificação: {e}")
 
 def carregar_agendamentos(user_id: str):
     try:
