@@ -51,7 +51,8 @@ def disparar_notificacao_push(titulo: str, corpo: str):
                     ),
                     data={
                         "title": titulo,
-                        "body": corpo
+                        "body": corpo,
+                        "ABRIR_TELA": "agendamentos"
                     },
                     token=token
                 )
