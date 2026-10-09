@@ -224,6 +224,9 @@ def salvar_agendamento(user_id, nome, telefone, servico, data_agend, horario):
         }
         db.collection("agendamentos").document(str(data_agend)).collection("horarios").document(nome_doc_horario).set(espelho_raiz)
 
+        # Dispara notificação PUSH para o aplicativo do administrador
+        disparar_notificacao_push("✨ Novo Agendamento!", f"{nome} agendou {servico} para {data_agend} às {horario}.")
+
         return True
     except Exception as e:
         print(f"Erro ao salvar agendamento: {e}")
@@ -628,6 +631,8 @@ def cancelar_agendamento_db(user_id: str, doc_id: str, status_atual: str):
                 except Exception as ex:
                     print(f"Erro ao atualizar espelho raiz no pedido de cancelamento: {ex}")
 
+            disparar_notificacao_push("❌ Pedido de Cancelamento", f"O cliente {d.get('cliente_nome', 'Cliente')} solicitou cancelamento para o dia {data_agend} às {horario}.")
+
             return {"acao": "solicitado", "mensagem": "Solicitação de cancelamento enviada à administração."}
             
     except Exception as e:
@@ -676,6 +681,8 @@ def solicitar_reagendamento_db(user_id: str, doc_id: str, status_atual: str, nov
                     db.collection("agendamentos").document(str(data_agend)).collection("horarios").document(nome_doc_horario).update(update_data)
                 except Exception as ex:
                     print(f"Erro ao atualizar espelho raiz no pedido de reagendamento: {ex}")
+
+            disparar_notificacao_push("🔄 Pedido de Reagendamento", f"O cliente {d.get('cliente_nome', 'Cliente')} solicitou reagendamento para o dia {nova_data} às {novo_horario}.")
 
             return {"acao": "solicitado", "mensagem": "Solicitação de reagendamento enviada à administração."}
         return None
