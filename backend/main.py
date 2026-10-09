@@ -297,3 +297,20 @@ async def analisar_penteado(
     if resultado:
         return resultado
     raise HTTPException(status_code=500, detail="Falha na análise da imagem pela IA.")
+
+class GerarDescricaoRequest(BaseModel):
+    nome: str
+    categoria: Optional[str] = ""
+    tempo: Optional[str] = ""
+    durabilidade: Optional[str] = ""
+
+@app.post("/api/gerar-descricao")
+def gerar_descricao_rota(req: GerarDescricaoRequest):
+    resultado = gemini.gerar_descricao_com_gemini(req.nome, req.categoria or "", req.tempo or "", req.durabilidade or "")
+    if resultado and ("descricao_curta" in resultado or "curta" in resultado):
+        return {
+            "descricao_curta": resultado.get("descricao_curta") or resultado.get("curta", ""),
+            "descricao_longa": resultado.get("descricao_longa") or resultado.get("longa", "")
+        }
+    curta, longa = fb.gerar_descricoes_locais(req.nome, req.categoria or "", req.tempo or "", req.durabilidade or "")
+    return {"descricao_curta": curta, "descricao_longa": longa}

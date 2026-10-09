@@ -57,3 +57,37 @@ def analisar_imagem_com_gemini(bytes_imagem, observacao_cliente: str = ""):
     except Exception as e:
         print(f"Erro Gemini: {e}")
         return None
+
+def gerar_descricao_com_gemini(nome: str, categoria: str = "", tempo: str = "", durabilidade: str = ""):
+    try:
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            raise Exception("Chave GEMINI_API_KEY não configurada.")
+
+        client = genai.Client(api_key=api_key)
+
+        prompt = f"""
+        Você é uma especialista em tranças e penteados afros da marca 'Paty Trancas'.
+        Crie descrições profissionais, atraentes e 100% EXCLUSIVAS para o modelo de trança: "{nome}" (categoria: "{categoria}", tempo de execução: "{tempo}", durabilidade: "{durabilidade}").
+
+        Retorne ESTRITAMENTE um objeto JSON válido (sem blocos de código markdown ou crases, apenas o JSON puro):
+        {{
+          "descricao_curta": "uma frase curta, elegante e chamativa sobre este estilo específico (máximo 120 caracteres)",
+          "descricao_longa": "uma descrição detalhada e encantadora sobre o charme deste modelo, sua versatilidade, praticidade e dicas de cuidados com touca de cetim"
+        }}
+        """
+
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+
+        texto_resultado = response.text.strip()
+        if texto_resultado.startswith("```"):
+            lines = texto_resultado.splitlines()[1:-1]
+            texto_resultado = "\n".join(lines).strip()
+
+        return json.loads(texto_resultado)
+    except Exception as e:
+        print(f"Erro ao gerar descrição com Gemini: {e}")
+        return None

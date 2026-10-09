@@ -936,3 +936,19 @@ def obter_usuario_db(user_id: str):
     except Exception as e:
         print(f"Erro ao obter dados do usuário: {e}")
         return {"cliente_nome": "", "cliente_telefone": ""}
+
+def gerar_descricoes_locais(nome: str, categoria: str = "", tempo: str = "", durabilidade: str = ""):
+    nome_clean = nome.strip()
+    cat_str = f" ({categoria})" if categoria else ""
+    tempo_str = f" executado em aproximadamente {tempo}" if tempo else ""
+    dura_str = f" com durabilidade média de {durabilidade}" if durabilidade else ""
+
+    curta = f"Modelo {nome_clean}: visual elegante, versátil e marcante que valoriza sua beleza natural."
+
+    longa = f"""O modelo {nome_clean}{cat_str} é ideal para quem busca alinhar elegância, praticidade e um visual cheio de personalidade.
+
+Feito com técnicas exclusivas e acabamento de alta qualidade{tempo_str}, este estilo garante leveza e proteção aos fios naturais{dura_str}.
+
+Perfeito para qualquer ocasião, do dia a dia a eventos especiais. Dica de cuidado: durma com touca ou fronha de cetim para manter suas tranças sempre lindas e alinhadas!"""
+
+    return curta, longa
