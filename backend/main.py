@@ -312,5 +312,4 @@ def gerar_descricao_rota(req: GerarDescricaoRequest):
             "descricao_curta": resultado.get("descricao_curta") or resultado.get("curta", ""),
             "descricao_longa": resultado.get("descricao_longa") or resultado.get("longa", "")
         }
-    curta, longa = fb.gerar_descricoes_locais(req.nome, req.categoria or "", req.tempo or "", req.durabilidade or "")
-    return {"descricao_curta": curta, "descricao_longa": longa}
+    raise HTTPException(status_code=500, detail="A IA do Gemini não conseguiu gerar a descrição.")
