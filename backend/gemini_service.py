@@ -78,7 +78,7 @@ def gerar_descricao_com_gemini(nome: str, categoria: str = "", tempo: str = "", 
         """
 
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-3.6-flash",
             contents=prompt
         )
 
